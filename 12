@@ -1,0 +1,399 @@
+-- 服务和玩家引用
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local Workspace = game:GetService("Workspace")
+local UIS = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
+local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+-- 配置表
+local Config = {
+    DefaultRunSpeed = 20,
+    UIToggleKey = Enum.KeyCode.RightAlt,
+    DefaultInteractDistance = 100
+}
+
+-- 状态变量
+local State = {
+    isFastInteract = false,
+    isNoClipEnabled = false,
+    runSpeed = Config.DefaultRunSpeed,
+    interactDistance = Config.DefaultInteractDistance,
+    interactConnection = nil,
+    runConnection = nil,
+    noClipConnection = nil,
+    inputConnection = nil
+}
+
+-- 相机引用
+local camera = Workspace.CurrentCamera
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GameCustomUI"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 300, 0, 620)
+MainFrame.Position = UDim2.new(0.03, 0, 0.15, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 45)
+TitleBar.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+TitleBar.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 12)
+TitleCorner.Parent = TitleBar
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Size = UDim2.new(1, 0, 1, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "游戏功能面板"
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.Font = Enum.Font.SourceSansBold
+TitleText.TextSize = 20
+TitleText.Parent = TitleBar
+
+local ContentContainer = Instance.new("Frame")
+ContentContainer.Position = UDim2.new(0, 0, 0, 45)
+ContentContainer.Size = UDim2.new(1, 0, 1, -45)
+ContentContainer.BackgroundTransparency = 1
+ContentContainer.Parent = MainFrame
+
+local Layout = Instance.new("UIListLayout")
+Layout.Parent = ContentContainer
+Layout.Padding = UDim.new(0, 10)
+Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+Layout.VerticalAlignment = Enum.VerticalAlignment.Top
+Layout.FillDirection = Enum.FillDirection.Vertical
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local function CreateButton(text, callback, order)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9, 0, 0, 45)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 18
+    btn.BorderSizePixel = 0
+    btn.LayoutOrder = order
+    btn.Parent = ContentContainer
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+    end)
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    end)
+    btn.MouseButton1Click:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+        task.wait(0.2)
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        if typeof(callback) == "function" then
+            callback()
+        end
+    end)
+    return btn
+end
+
+local function CreateTextbox(labelText, placeholder, callback, order)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0.9, 0, 0, 55)
+    container.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    container.BorderSizePixel = 0
+    container.LayoutOrder = order
+    container.Parent = ContentContainer
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = container
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.Position = UDim2.new(0, 12, 0, 5)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+
+    local input = Instance.new("TextBox")
+    input.Size = UDim2.new(1, -24, 0, 22)
+    input.Position = UDim2.new(0, 12, 0, 28)
+    input.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    input.PlaceholderText = placeholder
+    input.Text = ""
+    input.TextColor3 = Color3.fromRGB(255, 255, 255)
+    input.Font = Enum.Font.SourceSans
+    input.TextSize = 16
+    input.ClearTextOnFocus = false
+    input.BorderSizePixel = 0
+    input.Parent = container
+
+    local inputCorner = Instance.new("UICorner")
+    inputCorner.CornerRadius = UDim.new(0, 6)
+    inputCorner.Parent = input
+
+    local function confirmInput()
+        local value = tonumber(input.Text) or 20
+        input.Text = tostring(value)
+        callback(value)
+    end
+
+    input.FocusLost:Connect(confirmInput)
+    input.InputBegan:Connect(function(key)
+        if key.KeyCode == Enum.KeyCode.Return then
+            confirmInput()
+            input:ReleaseFocus()
+        end
+    end)
+
+    return container, input
+end
+
+local function CreateToggle(labelText, defaultState, callback, order)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0.9, 0, 0, 45)
+    container.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    container.BorderSizePixel = 0
+    container.LayoutOrder = order
+    container.Parent = ContentContainer
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = container
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -75, 1, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 16
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0, 65, 0, 30)
+    toggle.Position = UDim2.new(1, -75, 0.5, -15)
+    toggle.BackgroundColor3 = defaultState and Color3.fromRGB(0, 150, 200) or Color3.fromRGB(70, 70, 70)
+    toggle.Text = defaultState and "开" or "关"
+    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggle.Font = Enum.Font.SourceSans
+    toggle.TextSize = 14
+    toggle.BorderSizePixel = 0
+    toggle.Parent = container
+
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0, 15)
+    toggleCorner.Parent = toggle
+
+    local isEnabled = defaultState
+    toggle.MouseButton1Click:Connect(function()
+        isEnabled = not isEnabled
+        toggle.BackgroundColor3 = isEnabled and Color3.fromRGB(0, 150, 200) or Color3.fromRGB(70, 70, 70)
+        toggle.Text = isEnabled and "开" or "关"
+        callback(isEnabled)
+    end)
+
+    return container, toggle
+end
+
+
+
+-- 快速互动功能
+local function setFastInteract(status)
+    State.isFastInteract = status
+    if State.isFastInteract then
+        print("[UI] 快速互动已启用")
+        if State.interactConnection then State.interactConnection:Disconnect() end
+        State.interactConnection = ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt)
+            if not prompt:GetAttribute("OriginalHoldTime") then
+                prompt:SetAttribute("OriginalHoldTime", prompt.HoldDuration)
+            end
+            if not prompt:GetAttribute("OriginalMaxActivationDistance") then
+                prompt:SetAttribute("OriginalMaxActivationDistance", prompt.MaxActivationDistance)
+            end
+            prompt.HoldDuration = 0
+            prompt.MaxActivationDistance = State.interactDistance -- 使用设置的互动距离
+        end)
+        for _, prompt in ipairs(game:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") then
+                if not prompt:GetAttribute("OriginalHoldTime") then
+                    prompt:SetAttribute("OriginalHoldTime", prompt.HoldDuration)
+                end
+                if not prompt:GetAttribute("OriginalMaxActivationDistance") then
+                    prompt:SetAttribute("OriginalMaxActivationDistance", prompt.MaxActivationDistance)
+                end
+                prompt.HoldDuration = 0
+                prompt.MaxActivationDistance = State.interactDistance -- 使用设置的互动距离
+            end
+        end
+    else
+        print("[UI] 快速互动已关闭")
+        if State.interactConnection then
+            State.interactConnection:Disconnect()
+            State.interactConnection = nil
+        end
+        for _, prompt in ipairs(game:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") then
+                local original = prompt:GetAttribute("OriginalHoldTime")
+                if original then
+                    prompt.HoldDuration = original
+                    prompt:SetAttribute("OriginalHoldTime", nil)
+                end
+                local originalDistance = prompt:GetAttribute("OriginalMaxActivationDistance")
+                if originalDistance then
+                    prompt.MaxActivationDistance = originalDistance
+                    prompt:SetAttribute("OriginalMaxActivationDistance", nil)
+                end
+            end
+        end
+    end
+end
+
+-- 穿墙功能
+local function toggleNoClip(enabled)
+    State.isNoClipEnabled = enabled
+    local char = player.Character or player.CharacterAdded:Wait()
+    
+    if State.noClipConnection then
+        State.noClipConnection:Disconnect()
+        State.noClipConnection = nil
+    end
+
+    if State.isNoClipEnabled then
+        print("[UI] 穿墙功能已开启")
+        State.noClipConnection = RunService.Stepped:Connect(function()
+            if not char or not char:IsDescendantOf(Workspace) then
+                char = player.Character
+                if not char then return end
+            end
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                    part.CanTouch = false
+                end
+            end
+        end)
+    else
+        print("[UI] 穿墙功能已关闭")
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+                part.CanTouch = true
+            end
+        end
+    end
+end
+
+
+
+CreateTextbox("设置跑步速度", "输入数字（如20）", function(speed)
+    State.runSpeed = speed
+    print("[UI] 跑步速度已设置为：", State.runSpeed)
+end, 1)
+
+CreateTextbox("设置互动距离", "输入数字（10-5000）", function(distance)
+    -- 限制距离范围在10-5000之间
+    distance = math.clamp(distance, 10, 5000)
+    State.interactDistance = distance
+    print("[UI] 互动距离已设置为：", State.interactDistance)
+    
+    -- 如果快速互动已启用，立即应用新的距离设置
+    if State.isFastInteract then
+        for _, prompt in ipairs(game:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") then
+                prompt.MaxActivationDistance = State.interactDistance
+            end
+        end
+    end
+end, 2)
+
+CreateToggle("开启快速跑步", false, function(enabled)
+    if enabled then
+        print("[UI] 快速跑步已开启")
+        local lastTime = tick()
+        State.runConnection = RunService.Heartbeat:Connect(function()
+            local char = player.Character
+            if not char then return end
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if not humanoid or humanoid.Health <= 0 then return end
+            local moveDir = humanoid.MoveDirection
+            if moveDir.Magnitude > 0 then
+                local currentTime = tick()
+                local deltaTime = currentTime - lastTime
+                lastTime = currentTime
+                char:TranslateBy(moveDir * State.runSpeed * deltaTime)
+            else
+                lastTime = tick()
+            end
+        end)
+    else
+        print("[UI] 快速跑步已关闭")
+        if State.runConnection then
+            State.runConnection:Disconnect()
+            State.runConnection = nil
+        end
+    end
+end, 3)
+
+CreateButton("开启快速互动", function() setFastInteract(true) end, 4)
+CreateButton("关闭快速互动", function() setFastInteract(false) end, 5)
+
+CreateToggle("穿墙", false, toggleNoClip, 6)
+
+CreateButton("摧毁面板", function()
+    print("[UI] 面板已摧毁")
+    -- 清理所有连接
+    if State.noClipConnection then
+        State.noClipConnection:Disconnect()
+    end
+    if State.runConnection then
+        State.runConnection:Disconnect()
+    end
+    if State.interactConnection then
+        State.interactConnection:Disconnect()
+    end
+    if State.inputConnection then
+        State.inputConnection:Disconnect()
+    end
+    ScreenGui:Destroy()
+end, 7)
+
+CreateButton("重新进入服务器", function()
+    print("[UI] 正在重新进入服务器...")
+    local placeId = game.PlaceId
+    local teleportOptions = Instance.new("TeleportOptions")
+    teleportOptions.ShouldReserveServer = false
+    TeleportService:Teleport(placeId, player, teleportOptions)
+end, 8)
+
+UIS.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Config.UIToggleKey then
+        MainFrame.Visible = not MainFrame.Visible
+        print("[UI] 面板已"..(MainFrame.Visible and "显示" or "隐藏"))
+    end
+end)
