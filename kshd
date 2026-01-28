@@ -180,7 +180,7 @@ local State = {
     isRunKeyEnabled = true,
     -- 车辆飞行相关变量
     flightEnabled = false,
-    flightSpeed = 1,
+    flightSpeed = 5,
     -- 车辆速度加速相关变量
     velocityEnabled = true,
     velocityMult = 0.025,
@@ -2111,6 +2111,7 @@ end
 
 -- 车辆飞行功能
 local flightConnection = nil
+local defaultCharacterParent
 
 local function toggleFlight(enabled)
     State.flightEnabled = enabled
@@ -2123,7 +2124,7 @@ local function toggleFlight(enabled)
     if State.flightEnabled then
         print("[UI] 车辆飞行已开启")
         
-        flightConnection = RunService.Heartbeat:Connect(function()
+        flightConnection = RunService.Stepped:Connect(function()
             local char = player.Character
             if not char then return end
             
@@ -2134,6 +2135,8 @@ local function toggleFlight(enabled)
             if seatPart and seatPart:IsA("VehicleSeat") then
                 local vehicle = GetVehicleFromDescendant(seatPart)
                 if vehicle and vehicle:IsA("Model") then
+                    char.Parent = vehicle
+                    
                     if not vehicle.PrimaryPart then
                         if seatPart.Parent == vehicle then
                             vehicle.PrimaryPart = seatPart
@@ -2150,16 +2153,30 @@ local function toggleFlight(enabled)
                             (UIS:IsKeyDown(Enum.KeyCode.S) and State.flightSpeed) or (UIS:IsKeyDown(Enum.KeyCode.W) and -State.flightSpeed) or 0
                         )
                         
-                        local targetCFrame = CFrame.new(primaryPartCFrame.Position + moveVector, primaryPartCFrame.Position + workspace.CurrentCamera.CFrame.LookVector)
-                        vehicle:SetPrimaryPartCFrame(targetCFrame)
-                        seatPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                        seatPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                        if moveVector.Magnitude > 0 then
+                            local targetCFrame = CFrame.new(primaryPartCFrame.Position + moveVector, primaryPartCFrame.Position + workspace.CurrentCamera.CFrame.LookVector)
+                            local success, err = pcall(function()
+                                vehicle:SetPrimaryPartCFrame(targetCFrame)
+                                seatPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                                seatPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                            end)
+                            if not success then
+                                warn("[UI] 车辆飞行错误：", err)
+                            end
+                        end
                     end
+                end
+            else
+                if char and char.Parent then
+                    defaultCharacterParent = char.Parent
                 end
             end
         end)
     else
         print("[UI] 车辆飞行已关闭")
+        if defaultCharacterParent and player.Character then
+            player.Character.Parent = defaultCharacterParent
+        end
     end
 end
 
