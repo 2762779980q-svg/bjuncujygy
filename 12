@@ -1,10 +1,135 @@
+-- 设备检测与初始化
+local UIS = game:GetService("UserInputService")
+if UIS.TouchEnabled and not UIS.MouseEnabled and not UIS.KeyboardEnabled then
+    getgenv().bypass_adonis = true
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/FakeAngles/PasteWare-v2/refs/heads/main/PasteWareV2LegacyMobile.lua'))() return
+end
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+if not syn or not protectgui then
+    getgenv().protectgui = function() end
+end
+
+-- Adonis反作弊绕过
+if bypass_adonis then
+    task.spawn(function()
+        local g = getinfo or debug.getinfo
+        local d = false
+        local h = {}
+        local x, y
+        setthreadidentity(2)
+        for i, v in getgc(true) do
+            if typeof(v) == "table" then
+                local a = rawget(v, "Detected")
+                local b = rawget(v, "Kill")
+                local c = rawget(v, "Check")
+                local e = rawget(v, "Kick")
+                local f = rawget(v, "Punish")
+
+                if typeof(a) == "function" and not x then
+                    x = a
+                    local o; o = hookfunction(x, function(c, f, n)
+                        if c ~= "_" then
+                            if d then
+                            end
+                        end
+                        return true
+                    end)
+                    table.insert(h, x)
+                end
+
+                if rawget(v, "Variables") and rawget(v, "Process") and typeof(b) == "function" and not y then
+                    y = b
+                    local o; o = hookfunction(y, function(f)
+                        if d then
+                        end
+                    end)
+                    table.insert(h, y)
+                end
+
+                if typeof(c) == "function" then
+                    local o; o = hookfunction(c, function(...)
+                        return false
+                    end)
+                    table.insert(h, c)
+                end
+
+                if typeof(e) == "function" then
+                    local o; o = hookfunction(e, function(...)
+                        return false
+                    end)
+                    table.insert(h, e)
+                end
+
+                if typeof(f) == "function" then
+                    local o; o = hookfunction(f, function(...)
+                        return false
+                    end)
+                    table.insert(h, f)
+                end
+            end
+        end
+        local o; o = hookfunction(getrenv().debug.info, newcclosure(function(...) 
+            local a, f = ...
+            if x and a == x then
+                return coroutine.yield(coroutine.running())
+            end
+            return o(...)
+        end))
+        setthreadidentity(7)
+    end)
+end
+
+-- 脚本状态管理
+if not getgenv().ScriptState then
+    getgenv().ScriptState = {
+        isLockedOn = false,
+        targetPlayer = nil,
+        lockEnabled = false,
+        aimLockKeyMode = "Toggle",
+        aimLockVisibleCheck = false,
+        aimLockAliveCheck = false,
+        aimLockTeamCheck = false,
+        smoothingFactor = 0.1,
+        predictionFactor = 0.0,
+        bodyPartSelected = "Head",
+        ClosestHitPart = nil,
+        previousHighlight = nil,
+        lockedTime = 12,
+        reverseResolveIntensity = 5,
+        Desync = false,
+        antiLockEnabled = false,
+        resolverIntensity = 1.0,
+        resolverMethod = "Recalculate",
+        nebulaEnabled = false,
+        nightVisionEnabled = false,
+        nightVisionConnection = nil,
+        isSpeedActive = false,
+        isFlyActive = false,
+        isNoClipActive = false,
+        flySpeed = 1,
+        Cmultiplier = 1,
+        strafeEnabled = false,
+        strafeSpeed = 50,
+        strafeRadius = 5,
+        strafeMode = "Horizontal",
+        strafeTargetPart = nil,
+        originalCameraMode = nil,
+    }
+end
+
+
+
 -- 服务和玩家引用
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local Workspace = game:GetService("Workspace")
-local UIS = game:GetService("UserInputService")
 local TeleportService = game:GetService("TeleportService")
+local SoundService = game:GetService("SoundService")
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
@@ -19,94 +144,1219 @@ local Config = {
 local State = {
     isFastInteract = false,
     isNoClipEnabled = false,
+    isHitboxExpanded = false,
+    isSpinEnabled = false,
+    isAutoAttackEnabled = false,
+    autoAttackRange = 20,
+    autoAttackDelay = 0,
+    isAttackRangeVisible = false,
+    attackRangeIndicator = nil,
+    attackRangeConnection = nil,
+    customLockedPlayer = nil,
+    spinSpeed = 10,
+    hitboxSize = 5,
+    hitboxTransparency = 0.5,
     runSpeed = Config.DefaultRunSpeed,
     interactDistance = Config.DefaultInteractDistance,
     interactConnection = nil,
+    promptTriggeredConnection = nil,
+    promptButtonHoldBeganConnection = nil,
     runConnection = nil,
     noClipConnection = nil,
-    inputConnection = nil
+    hitboxConnection = nil,
+    spinConnection = nil,
+    autoAttackConnection = nil,
+    playerAddedConnection = nil,
+    playerRemovingConnection = nil,
+    inputConnection = nil,
+    lastInteractedObject = nil,
+    hitboxOriginalData = {},
+    -- 旋转攻击参数
+    attackRotationSpeed = 10,
+    attackRotationAngle = 0,
+    -- 瞬移模式参数
+    teleportMode = "rotate", -- "behind", "rotate", "feet", "head"
+    -- 快捷键参数
+    isRunKeyEnabled = true,
+    -- ESP相关变量
+    espEnabled = false,
+    espDrawings = {},
+    espHighlights = {},
+    espConnection = nil,
+    espSettings = {
+        TeamCheck = false,
+        ShowTeam = false,
+        VisibilityCheck = true,
+        BoxESP = false,
+        BoxStyle = "Corner",
+        BoxOutline = true,
+        BoxFilled = false,
+        BoxFillTransparency = 0.5,
+        BoxThickness = 1,
+        TracerESP = false,
+        TracerOrigin = "Bottom",
+        TracerStyle = "Line",
+        TracerThickness = 1,
+        HealthESP = false,
+        HealthStyle = "Bar",
+        HealthBarSide = "Left",
+        HealthTextSuffix = "HP",
+        NameESP = false,
+        NameMode = "DisplayName",
+        ShowDistance = true,
+        DistanceUnit = "studs",
+        TextSize = 14,
+        TextFont = 2,
+        MaxDistance = 1000,
+        Snaplines = false,
+        SnaplineStyle = "Straight",
+        ChamsEnabled = false,
+        ChamsOutlineColor = Color3.fromRGB(255, 255, 255),
+        ChamsFillColor = Color3.fromRGB(255, 0, 0),
+        ChamsOccludedColor = Color3.fromRGB(150, 0, 0),
+        ChamsTransparency = 0.5,
+        ChamsOutlineTransparency = 0,
+        ChamsOutlineThickness = 0.1,
+        SkeletonESP = false,
+        SkeletonColor = Color3.fromRGB(255, 255, 255),
+        SkeletonThickness = 1.5,
+        SkeletonTransparency = 1
+    },
+    espColors = {
+        Enemy = Color3.fromRGB(255, 25, 25),
+        Ally = Color3.fromRGB(25, 255, 25),
+        Neutral = Color3.fromRGB(255, 255, 255),
+        Selected = Color3.fromRGB(255, 210, 0),
+        Health = Color3.fromRGB(0, 255, 0),
+        Distance = Color3.fromRGB(200, 200, 200)
+    }
 }
 
 -- 相机引用
 local camera = Workspace.CurrentCamera
 
+-- 初始化互动对象记录功能
+local function initInteractObjectRecorder()
+    -- 记录最近互动的对象
+    local function recordInteractedObject(prompt)
+        -- 记录最近互动的对象
+        State.lastInteractedObject = prompt.Parent
+        print("[UI] 记录最近互动对象：", State.lastInteractedObject:GetFullName())
+    end
+    
+    -- 持续监听互动事件，无论快速互动是否开启
+    State.promptTriggeredConnection = ProximityPromptService.PromptTriggered:Connect(recordInteractedObject)
+    State.promptButtonHoldBeganConnection = ProximityPromptService.PromptButtonHoldBegan:Connect(recordInteractedObject)
+    print("[UI] 互动对象记录功能已初始化")
+end
+
+-- 清理互动对象记录功能
+local function cleanupInteractObjectRecorder()
+    if State.promptTriggeredConnection then
+        State.promptTriggeredConnection:Disconnect()
+        State.promptTriggeredConnection = nil
+    end
+    if State.promptButtonHoldBeganConnection then
+        State.promptButtonHoldBeganConnection:Disconnect()
+        State.promptButtonHoldBeganConnection = nil
+    end
+end
+
+-- 核心功能函数
+local ValidTargetParts = {"Head", "HumanoidRootPart"}
+local PredictionAmount = 0.165
+
+-- ESP相关函数
+local function createESP(player)
+    if player == Players.LocalPlayer then return end
+    
+    local box = {
+        TopLeft = Drawing.new("Line"),
+        TopRight = Drawing.new("Line"),
+        BottomLeft = Drawing.new("Line"),
+        BottomRight = Drawing.new("Line"),
+        Left = Drawing.new("Line"),
+        Right = Drawing.new("Line"),
+        Top = Drawing.new("Line"),
+        Bottom = Drawing.new("Line")
+    }
+    
+    for _, line in pairs(box) do
+        line.Visible = false
+        line.Color = State.espColors.Enemy
+        line.Thickness = State.espSettings.BoxThickness
+    end
+    
+    local tracer = Drawing.new("Line")
+    tracer.Visible = false
+    tracer.Color = State.espColors.Enemy
+    tracer.Thickness = State.espSettings.TracerThickness
+    
+    local healthBar = {
+        Outline = Drawing.new("Square"),
+        Fill = Drawing.new("Square"),
+        Text = Drawing.new("Text")
+    }
+    
+    for _, obj in pairs(healthBar) do
+        obj.Visible = false
+        if obj == healthBar.Fill then
+            obj.Color = State.espColors.Health
+            obj.Filled = true
+        elseif obj == healthBar.Text then
+            obj.Center = true
+            obj.Size = State.espSettings.TextSize
+            obj.Color = State.espColors.Health
+            obj.Font = State.espSettings.TextFont
+        end
+    end
+    
+    local info = {
+        Name = Drawing.new("Text"),
+        Distance = Drawing.new("Text")
+    }
+    
+    for _, text in pairs(info) do
+        text.Visible = false
+        text.Center = true
+        text.Size = State.espSettings.TextSize
+        text.Color = State.espColors.Enemy
+        text.Font = State.espSettings.TextFont
+        text.Outline = true
+    end
+    
+    local snapline = Drawing.new("Line")
+    snapline.Visible = false
+    snapline.Color = State.espColors.Enemy
+    snapline.Thickness = 1
+    
+    local highlight = Instance.new("Highlight")
+    highlight.FillColor = State.espSettings.ChamsFillColor
+    highlight.OutlineColor = State.espSettings.ChamsOutlineColor
+    highlight.FillTransparency = State.espSettings.ChamsTransparency
+    highlight.OutlineTransparency = State.espSettings.ChamsOutlineTransparency
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Enabled = State.espSettings.ChamsEnabled
+    
+    State.espHighlights[player] = highlight
+    
+    local skeleton = {
+        Head = Drawing.new("Line"),
+        Neck = Drawing.new("Line"),
+        UpperSpine = Drawing.new("Line"),
+        LowerSpine = Drawing.new("Line"),
+        LeftShoulder = Drawing.new("Line"),
+        LeftUpperArm = Drawing.new("Line"),
+        LeftLowerArm = Drawing.new("Line"),
+        LeftHand = Drawing.new("Line"),
+        RightShoulder = Drawing.new("Line"),
+        RightUpperArm = Drawing.new("Line"),
+        RightLowerArm = Drawing.new("Line"),
+        RightHand = Drawing.new("Line"),
+        LeftHip = Drawing.new("Line"),
+        LeftUpperLeg = Drawing.new("Line"),
+        LeftLowerLeg = Drawing.new("Line"),
+        LeftFoot = Drawing.new("Line"),
+        RightHip = Drawing.new("Line"),
+        RightUpperLeg = Drawing.new("Line"),
+        RightLowerLeg = Drawing.new("Line"),
+        RightFoot = Drawing.new("Line")
+    }
+    
+    for _, line in pairs(skeleton) do
+        line.Visible = false
+        line.Color = State.espSettings.SkeletonColor
+        line.Thickness = State.espSettings.SkeletonThickness
+        line.Transparency = State.espSettings.SkeletonTransparency
+    end
+    
+    State.espDrawings[player] = {
+        Box = box,
+        Tracer = tracer,
+        HealthBar = healthBar,
+        Info = info,
+        Snapline = snapline,
+        Skeleton = skeleton
+    }
+end
+
+local function removeESP(player)
+    local esp = State.espDrawings[player]
+    if esp then
+        for _, obj in pairs(esp.Box) do obj:Remove() end
+        esp.Tracer:Remove()
+        for _, obj in pairs(esp.HealthBar) do obj:Remove() end
+        for _, obj in pairs(esp.Info) do obj:Remove() end
+        esp.Snapline:Remove()
+        if esp.Skeleton then
+            for _, line in pairs(esp.Skeleton) do
+                line:Remove()
+            end
+        end
+        State.espDrawings[player] = nil
+    end
+    
+    local highlight = State.espHighlights[player]
+    if highlight then
+        highlight:Destroy()
+        State.espHighlights[player] = nil
+    end
+end
+
+local function getPlayerColor(player)
+    return player.Team == Players.LocalPlayer.Team and State.espColors.Ally or State.espColors.Enemy
+end
+
+local function getTracerOrigin()
+    local origin = State.espSettings.TracerOrigin
+    if origin == "Bottom" then
+        return Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
+    elseif origin == "Top" then
+        return Vector2.new(camera.ViewportSize.X/2, 0)
+    elseif origin == "Mouse" then
+        return UIS:GetMouseLocation()
+    else
+        return Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)
+    end
+end
+
+local function updateESP(player)
+    if not State.espEnabled then return end
+    
+    local esp = State.espDrawings[player]
+    if not esp then return end
+    
+    local character = player.Character
+    if not character then 
+        for _, obj in pairs(esp.Box) do obj.Visible = false end
+        esp.Tracer.Visible = false
+        for _, obj in pairs(esp.HealthBar) do obj.Visible = false end
+        for _, obj in pairs(esp.Info) do obj.Visible = false end
+        esp.Snapline.Visible = false
+        if esp.Skeleton then
+            for _, line in pairs(esp.Skeleton) do
+                line.Visible = false
+            end
+        end
+        return 
+    end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then 
+        for _, obj in pairs(esp.Box) do obj.Visible = false end
+        esp.Tracer.Visible = false
+        for _, obj in pairs(esp.HealthBar) do obj.Visible = false end
+        for _, obj in pairs(esp.Info) do obj.Visible = false end
+        esp.Snapline.Visible = false
+        if esp.Skeleton then
+            for _, line in pairs(esp.Skeleton) do
+                line.Visible = false
+            end
+        end
+        return 
+    end
+    
+    local _, isOnScreen = camera:WorldToViewportPoint(rootPart.Position)
+    if not isOnScreen then
+        for _, obj in pairs(esp.Box) do obj.Visible = false end
+        esp.Tracer.Visible = false
+        for _, obj in pairs(esp.HealthBar) do obj.Visible = false end
+        for _, obj in pairs(esp.Info) do obj.Visible = false end
+        esp.Snapline.Visible = false
+        if esp.Skeleton then
+            for _, line in pairs(esp.Skeleton) do
+                line.Visible = false
+            end
+        end
+        return
+    end
+    
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then
+        for _, obj in pairs(esp.Box) do obj.Visible = false end
+        esp.Tracer.Visible = false
+        for _, obj in pairs(esp.HealthBar) do obj.Visible = false end
+        for _, obj in pairs(esp.Info) do obj.Visible = false end
+        esp.Snapline.Visible = false
+        if esp.Skeleton then
+            for _, line in pairs(esp.Skeleton) do
+                line.Visible = false
+            end
+        end
+        return
+    end
+    
+    local pos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
+    local distance = (rootPart.Position - camera.CFrame.Position).Magnitude
+    
+    if not onScreen or distance > State.espSettings.MaxDistance then
+        for _, obj in pairs(esp.Box) do obj.Visible = false end
+        esp.Tracer.Visible = false
+        for _, obj in pairs(esp.HealthBar) do obj.Visible = false end
+        for _, obj in pairs(esp.Info) do obj.Visible = false end
+        esp.Snapline.Visible = false
+        return
+    end
+    
+    if State.espSettings.TeamCheck and player.Team == Players.LocalPlayer.Team and not State.espSettings.ShowTeam then
+        for _, obj in pairs(esp.Box) do obj.Visible = false end
+        esp.Tracer.Visible = false
+        for _, obj in pairs(esp.HealthBar) do obj.Visible = false end
+        for _, obj in pairs(esp.Info) do obj.Visible = false end
+        esp.Snapline.Visible = false
+        return
+    end
+    
+    local color = getPlayerColor(player)
+    local size = character:GetExtentsSize()
+    local cf = rootPart.CFrame
+    
+    local top, top_onscreen = camera:WorldToViewportPoint(cf * CFrame.new(0, size.Y/2, 0).Position)
+    local bottom, bottom_onscreen = camera:WorldToViewportPoint(cf * CFrame.new(0, -size.Y/2, 0).Position)
+    
+    if not top_onscreen or not bottom_onscreen then
+        for _, obj in pairs(esp.Box) do obj.Visible = false end
+        return
+    end
+    
+    local screenSize = bottom.Y - top.Y
+    local boxWidth = screenSize * 0.65
+    local boxPosition = Vector2.new(top.X - boxWidth/2, top.Y)
+    local boxSize = Vector2.new(boxWidth, screenSize)
+    
+    for _, obj in pairs(esp.Box) do
+        obj.Visible = false
+    end
+    
+    if State.espSettings.BoxESP then
+        if State.espSettings.BoxStyle == "Corner" then
+            local cornerSize = boxWidth * 0.2
+            
+            esp.Box.TopLeft.From = boxPosition
+            esp.Box.TopLeft.To = boxPosition + Vector2.new(cornerSize, 0)
+            esp.Box.TopLeft.Visible = true
+            
+            esp.Box.TopRight.From = boxPosition + Vector2.new(boxSize.X, 0)
+            esp.Box.TopRight.To = boxPosition + Vector2.new(boxSize.X - cornerSize, 0)
+            esp.Box.TopRight.Visible = true
+            
+            esp.Box.BottomLeft.From = boxPosition + Vector2.new(0, boxSize.Y)
+            esp.Box.BottomLeft.To = boxPosition + Vector2.new(cornerSize, boxSize.Y)
+            esp.Box.BottomLeft.Visible = true
+            
+            esp.Box.BottomRight.From = boxPosition + Vector2.new(boxSize.X, boxSize.Y)
+            esp.Box.BottomRight.To = boxPosition + Vector2.new(boxSize.X - cornerSize, boxSize.Y)
+            esp.Box.BottomRight.Visible = true
+            
+            esp.Box.Left.From = boxPosition
+            esp.Box.Left.To = boxPosition + Vector2.new(0, cornerSize)
+            esp.Box.Left.Visible = true
+            
+            esp.Box.Right.From = boxPosition + Vector2.new(boxSize.X, 0)
+            esp.Box.Right.To = boxPosition + Vector2.new(boxSize.X, cornerSize)
+            esp.Box.Right.Visible = true
+            
+            esp.Box.Top.From = boxPosition + Vector2.new(0, boxSize.Y)
+            esp.Box.Top.To = boxPosition + Vector2.new(0, boxSize.Y - cornerSize)
+            esp.Box.Top.Visible = true
+            
+            esp.Box.Bottom.From = boxPosition + Vector2.new(boxSize.X, boxSize.Y)
+            esp.Box.Bottom.To = boxPosition + Vector2.new(boxSize.X, boxSize.Y - cornerSize)
+            esp.Box.Bottom.Visible = true
+        else
+            esp.Box.Left.From = boxPosition
+            esp.Box.Left.To = boxPosition + Vector2.new(0, boxSize.Y)
+            esp.Box.Left.Visible = true
+            
+            esp.Box.Right.From = boxPosition + Vector2.new(boxSize.X, 0)
+            esp.Box.Right.To = boxPosition + Vector2.new(boxSize.X, boxSize.Y)
+            esp.Box.Right.Visible = true
+            
+            esp.Box.Top.From = boxPosition
+            esp.Box.Top.To = boxPosition + Vector2.new(boxSize.X, 0)
+            esp.Box.Top.Visible = true
+            
+            esp.Box.Bottom.From = boxPosition + Vector2.new(0, boxSize.Y)
+            esp.Box.Bottom.To = boxPosition + Vector2.new(boxSize.X, boxSize.Y)
+            esp.Box.Bottom.Visible = true
+            
+            esp.Box.TopLeft.Visible = false
+            esp.Box.TopRight.Visible = false
+            esp.Box.BottomLeft.Visible = false
+            esp.Box.BottomRight.Visible = false
+        end
+        
+        for _, obj in pairs(esp.Box) do
+            if obj.Visible then
+                obj.Color = color
+                obj.Thickness = State.espSettings.BoxThickness
+            end
+        end
+    end
+    
+    if State.espSettings.TracerESP then
+        esp.Tracer.From = getTracerOrigin()
+        esp.Tracer.To = Vector2.new(pos.X, pos.Y)
+        esp.Tracer.Color = color
+        esp.Tracer.Visible = true
+    else
+        esp.Tracer.Visible = false
+    end
+    
+    if State.espSettings.HealthESP then
+        local health = humanoid.Health
+        local maxHealth = humanoid.MaxHealth
+        local healthPercent = health/maxHealth
+        
+        local barHeight = screenSize * 0.8
+        local barWidth = 4
+        local barPos = Vector2.new(
+            boxPosition.X - barWidth - 2,
+            boxPosition.Y + (screenSize - barHeight)/2
+        )
+        
+        esp.HealthBar.Outline.Size = Vector2.new(barWidth, barHeight)
+        esp.HealthBar.Outline.Position = barPos
+        esp.HealthBar.Outline.Visible = true
+        
+        esp.HealthBar.Fill.Size = Vector2.new(barWidth, barHeight * healthPercent)
+        esp.HealthBar.Fill.Position = Vector2.new(barPos.X, barPos.Y + barHeight * (1 - healthPercent))
+        esp.HealthBar.Fill.Visible = true
+        
+        esp.HealthBar.Text.Text = tostring(math.floor(health)) .. State.espSettings.HealthTextSuffix
+        esp.HealthBar.Text.Position = Vector2.new(barPos.X + barWidth/2, barPos.Y - 15)
+        esp.HealthBar.Text.Visible = true
+    else
+        for _, obj in pairs(esp.HealthBar) do obj.Visible = false end
+    end
+    
+    if State.espSettings.NameESP then
+        local nameText = State.espSettings.NameMode == "DisplayName" and player.DisplayName or player.Name
+        esp.Info.Name.Text = nameText
+        esp.Info.Name.Position = Vector2.new(boxPosition.X + boxSize.X/2, boxPosition.Y - 20)
+        esp.Info.Name.Visible = true
+    else
+        esp.Info.Name.Visible = false
+    end
+    
+    if State.espSettings.ShowDistance then
+        local distanceText = tostring(math.floor(distance)) .. State.espSettings.DistanceUnit
+        esp.Info.Distance.Text = distanceText
+        esp.Info.Distance.Position = Vector2.new(boxPosition.X + boxSize.X/2, boxPosition.Y + boxSize.Y + 5)
+        esp.Info.Distance.Visible = true
+    else
+        esp.Info.Distance.Visible = false
+    end
+    
+    if State.espSettings.Snaplines then
+        esp.Snapline.From = getTracerOrigin()
+        esp.Snapline.To = Vector2.new(pos.X, pos.Y)
+        esp.Snapline.Color = color
+        esp.Snapline.Visible = true
+    else
+        esp.Snapline.Visible = false
+    end
+    
+    local highlight = State.espHighlights[player]
+    if highlight then
+        highlight.Enabled = State.espSettings.ChamsEnabled
+        highlight.Adornee = character
+        highlight.FillColor = State.espSettings.ChamsFillColor
+        highlight.OutlineColor = State.espSettings.ChamsOutlineColor
+        highlight.FillTransparency = State.espSettings.ChamsTransparency
+        highlight.OutlineTransparency = State.espSettings.ChamsOutlineTransparency
+    end
+    
+    if State.espSettings.SkeletonESP and esp.Skeleton then
+        local function worldToScreen(pos)
+            local screenPos, onScreen = camera:WorldToViewportPoint(pos)
+            if onScreen then
+                return Vector2.new(screenPos.X, screenPos.Y), true
+            end
+            return Vector2.new(), false
+        end
+        
+        local function drawLine(from, to, line)
+            local fromPos, fromOnScreen = worldToScreen(from)
+            local toPos, toOnScreen = worldToScreen(to)
+            if fromOnScreen and toOnScreen then
+                line.From = fromPos
+                line.To = toPos
+                line.Color = State.espSettings.SkeletonColor
+                line.Visible = true
+            else
+                line.Visible = false
+            end
+        end
+        
+        local head = character:FindFirstChild("Head")
+        local neck = character:FindFirstChild("Neck") or character:FindFirstChild("UpperTorso")
+        local upperTorso = character:FindFirstChild("UpperTorso")
+        local lowerTorso = character:FindFirstChild("LowerTorso")
+        local leftShoulder = character:FindFirstChild("LeftShoulder")
+        local rightShoulder = character:FindFirstChild("RightShoulder")
+        local leftUpperArm = character:FindFirstChild("LeftUpperArm")
+        local rightUpperArm = character:FindFirstChild("RightUpperArm")
+        local leftLowerArm = character:FindFirstChild("LeftLowerArm")
+        local rightLowerArm = character:FindFirstChild("RightLowerArm")
+        local leftHand = character:FindFirstChild("LeftHand")
+        local rightHand = character:FindFirstChild("RightHand")
+        local leftHip = character:FindFirstChild("LeftHip")
+        local rightHip = character:FindFirstChild("RightHip")
+        local leftUpperLeg = character:FindFirstChild("LeftUpperLeg")
+        local rightUpperLeg = character:FindFirstChild("RightUpperLeg")
+        local leftLowerLeg = character:FindFirstChild("LeftLowerLeg")
+        local rightLowerLeg = character:FindFirstChild("RightLowerLeg")
+        local leftFoot = character:FindFirstChild("LeftFoot")
+        local rightFoot = character:FindFirstChild("RightFoot")
+        
+        if head and upperTorso then
+            drawLine(head.Position, upperTorso.Position, esp.Skeleton.Head)
+        end
+        
+        if upperTorso and lowerTorso then
+            drawLine(upperTorso.Position, lowerTorso.Position, esp.Skeleton.UpperSpine)
+            drawLine(lowerTorso.Position, upperTorso.Position, esp.Skeleton.LowerSpine)
+        end
+        
+        if leftUpperArm and upperTorso then
+            drawLine(leftUpperArm.Position, upperTorso.Position, esp.Skeleton.LeftShoulder)
+        end
+        
+        if leftLowerArm and leftUpperArm then
+            drawLine(leftLowerArm.Position, leftUpperArm.Position, esp.Skeleton.LeftUpperArm)
+        end
+        
+        if leftHand and leftLowerArm then
+            drawLine(leftHand.Position, leftLowerArm.Position, esp.Skeleton.LeftLowerArm)
+        end
+        
+        if rightUpperArm and upperTorso then
+            drawLine(rightUpperArm.Position, upperTorso.Position, esp.Skeleton.RightShoulder)
+        end
+        
+        if rightLowerArm and rightUpperArm then
+            drawLine(rightLowerArm.Position, rightUpperArm.Position, esp.Skeleton.RightUpperArm)
+        end
+        
+        if rightHand and rightLowerArm then
+            drawLine(rightHand.Position, rightLowerArm.Position, esp.Skeleton.RightLowerArm)
+        end
+        
+        if leftUpperLeg and lowerTorso then
+            drawLine(leftUpperLeg.Position, lowerTorso.Position, esp.Skeleton.LeftHip)
+        end
+        
+        if leftLowerLeg and leftUpperLeg then
+            drawLine(leftLowerLeg.Position, leftUpperLeg.Position, esp.Skeleton.LeftUpperLeg)
+        end
+        
+        if leftFoot and leftLowerLeg then
+            drawLine(leftFoot.Position, leftLowerLeg.Position, esp.Skeleton.LeftLowerLeg)
+        end
+        
+        if rightUpperLeg and lowerTorso then
+            drawLine(rightUpperLeg.Position, lowerTorso.Position, esp.Skeleton.RightHip)
+        end
+        
+        if rightLowerLeg and rightUpperLeg then
+            drawLine(rightLowerLeg.Position, rightUpperLeg.Position, esp.Skeleton.RightUpperLeg)
+        end
+        
+        if rightFoot and rightLowerLeg then
+            drawLine(rightFoot.Position, rightLowerLeg.Position, esp.Skeleton.RightLowerLeg)
+        end
+    elseif esp.Skeleton then
+        for _, line in pairs(esp.Skeleton) do
+            line.Visible = false
+        end
+    end
+end
+
+local ExpectedArguments = {
+    ViewportPointToRay = {
+        ArgCountRequired = 2,
+        Args = { "number", "number" }
+    },
+    ScreenPointToRay = {
+        ArgCountRequired = 2,
+        Args = { "number", "number" }
+    },
+    Raycast = {
+        ArgCountRequired = 3,
+        Args = { "Instance", "Vector3", "Vector3", "RaycastParams" }
+    },
+    FindPartOnRay = {
+        ArgCountRequired = 2,
+        Args = { "Ray", "Instance?", "boolean?", "boolean?" }
+    },
+    FindPartOnRayWithIgnoreList = {
+        ArgCountRequired = 2,
+        Args = { "Ray", "table", "boolean?", "boolean?" }
+    },
+    FindPartOnRayWithWhitelist = {
+        ArgCountRequired = 2,
+        Args = { "Ray", "table", "boolean?" }
+    }
+}
+
+local function getPositionOnScreen(Vector)
+    local Vec3, OnScreen = camera:WorldToScreenPoint(Vector)
+    return Vector2.new(Vec3.X, Vec3.Y), OnScreen
+end
+
+local function ValidateArguments(Args, RayMethod)
+    local Matches = 0
+    if #Args < RayMethod.ArgCountRequired then
+        return false
+    end
+
+    for Pos, Argument in next, Args do
+        local Expected = RayMethod.Args[Pos]
+        if not Expected then
+            break
+        end
+
+        local IsOptional = Expected:sub(-1) == "?"
+        local BaseType = IsOptional and Expected:sub(1, -2) or Expected
+
+        if typeof(Argument) == BaseType then
+            Matches = Matches + 1
+        elseif IsOptional and Argument == nil then
+            Matches = Matches + 1
+        end
+    end
+
+    return Matches >= RayMethod.ArgCountRequired
+end
+
+local function getDirection(Origin, Position)
+    return (Position - Origin).Unit
+end
+
+local function getMousePosition()
+    return UIS:GetMouseLocation()
+end
+
+local function getTeamComparisonOption()
+    local esp = rawget(getgenv(), "ExunysDeveloperESP")
+    if esp and esp.DeveloperSettings and esp.DeveloperSettings.TeamCheckOption then
+        return esp.DeveloperSettings.TeamCheckOption
+    end
+end
+
+local function playersOnSameTeam(player)
+    if not player then
+        return false
+    end
+
+    local option = getTeamComparisonOption()
+    if option then
+        local okLocal, localValue = pcall(function()
+            return player[option]
+        end)
+        local okTarget, targetValue = pcall(function()
+            return player[option]
+        end)
+
+        if okLocal and okTarget and localValue ~= nil and targetValue ~= nil then
+            return targetValue == localValue
+        end
+    end
+
+    local okLocalTeam, localTeam = pcall(function()
+        return player.Team
+    end)
+    local okTargetTeam, targetTeam = pcall(function()
+        return player.Team
+    end)
+
+    if okLocalTeam and okTargetTeam and localTeam and targetTeam then
+        return targetTeam == localTeam
+    end
+
+    local okLocalColor, localColor = pcall(function()
+        return player.TeamColor
+    end)
+    local okTargetColor, targetColor = pcall(function()
+        return player.TeamColor
+    end)
+
+    if okLocalColor and okTargetColor and localColor and targetColor then
+        return targetColor == localColor
+    end
+
+    return false
+end
+
+local function IsPlayerVisible(Player)
+    local PlayerCharacter = Player and Player.Character
+    local LocalPlayerCharacter = player.Character
+
+    if not (PlayerCharacter and LocalPlayerCharacter) then
+        return false
+    end
+
+    local targetPartOption = ScriptState.bodyPartSelected or "Head"
+    local PlayerRoot = PlayerCharacter:FindFirstChild(targetPartOption) or PlayerCharacter:FindFirstChild("HumanoidRootPart")
+
+    if not PlayerRoot then
+        return false
+    end
+
+    local CastPoints, IgnoreList = { PlayerRoot.Position, LocalPlayerCharacter, PlayerCharacter }, { LocalPlayerCharacter, PlayerCharacter }
+    local ObscuringObjects = #camera:GetPartsObscuringTarget(CastPoints, IgnoreList)
+
+    return ObscuringObjects == 0
+end
+
+local function getClosestPlayer(config)
+    local state = getgenv().ScriptState
+    config = config or {}
+
+    local targetPartOption = config.targetPart or state.bodyPartSelected or "Head"
+    if not targetPartOption then
+        return nil, nil
+    end
+
+    local ignoredPlayers = config.ignoredPlayers
+    local radiusOption = config.radius or 2000
+    local visibleCheck = config.visibleCheck
+    if visibleCheck == nil then
+        visibleCheck = state.aimLockVisibleCheck or false
+    end
+    local aliveCheck = config.aliveCheck
+    if aliveCheck == nil then
+        aliveCheck = state.aimLockAliveCheck or false
+    end
+    local teamCheck = config.teamCheck
+    if teamCheck == nil then
+        teamCheck = state.aimLockTeamCheck or false
+    end
+
+    local teamEvaluator = config.teamEvaluator
+    if type(teamEvaluator) ~= "function" then
+        teamEvaluator = playersOnSameTeam
+    end
+
+    local originPosition = config.origin
+    if typeof(originPosition) == "function" then
+        originPosition = originPosition()
+    end
+    originPosition = originPosition or getMousePosition()
+
+    local ClosestPart
+    local ClosestPlayer
+    local DistanceToMouse
+
+    for _, Player in next, Players:GetPlayers() do
+        if Player == player then
+            continue
+        end
+
+        if ignoredPlayers and ignoredPlayers[Player.Name] then
+            continue
+        end
+
+        if teamCheck and teamEvaluator(Player) then
+            continue
+        end
+
+        if visibleCheck and not IsPlayerVisible(Player) then
+            continue
+        end
+
+        local Character = Player.Character
+        if not Character then
+            continue
+        end
+
+        local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+        local Humanoid = Character:FindFirstChild("Humanoid")
+
+        if not HumanoidRootPart or not Humanoid then
+            continue
+        end
+
+        if aliveCheck and Humanoid.Health <= 0 then
+            continue
+        end
+
+        local ScreenPosition, OnScreen = getPositionOnScreen(HumanoidRootPart.Position)
+        if not OnScreen then
+            continue
+        end
+
+        local Distance = (originPosition - ScreenPosition).Magnitude
+        if Distance <= (DistanceToMouse or radiusOption) then
+            local targetPartName
+            if targetPartOption == "Random" then
+                targetPartName = ValidTargetParts[math.random(1, #ValidTargetParts)]
+            else
+                targetPartName = targetPartOption
+            end
+
+            local candidatePart = Character[targetPartName]
+            if candidatePart then
+                ClosestPart = candidatePart
+                ClosestPlayer = Player
+                DistanceToMouse = Distance
+            end
+        end
+    end
+
+    return ClosestPart, ClosestPlayer
+end
+
+local function getBodyPart(character, part)
+    return character:FindFirstChild(part) and part or "Head"
+end
+
+local function getNearestPlayerToMouse()
+    local _, Player = getClosestPlayer({
+        targetPart = ScriptState.bodyPartSelected,
+        visibleCheck = ScriptState.aimLockVisibleCheck,
+        aliveCheck = ScriptState.aimLockAliveCheck,
+        teamCheck = ScriptState.aimLockTeamCheck
+    })
+    if Player and Player ~= player then
+        return Player
+    end
+    return nil
+end
+
+local function acquireLockTarget()
+    -- 如果有自定义锁定的玩家，优先使用
+    if State.customLockedPlayer then
+        local Player = State.customLockedPlayer
+        if Player and Player.Character then
+            local partName = getBodyPart(Player.Character, ScriptState.bodyPartSelected)
+            local targetPart = Player.Character:FindFirstChild(partName)
+
+            if targetPart then
+                ScriptState.isLockedOn = true
+                ScriptState.targetPlayer = Player
+                return true
+            end
+        end
+    end
+    
+    -- 否则查找最近的玩家
+    local Player = getNearestPlayerToMouse()
+    if Player and Player.Character then
+        local partName = getBodyPart(Player.Character, ScriptState.bodyPartSelected)
+        local targetPart = Player.Character:FindFirstChild(partName)
+
+        if targetPart then
+            ScriptState.isLockedOn = true
+            ScriptState.targetPlayer = Player
+            return true
+        end
+    end
+
+    ScriptState.isLockedOn = false
+    ScriptState.targetPlayer = nil
+    return false
+end
+
+local function toggleLockOnPlayer(forceState)
+    local desiredState = forceState
+    if desiredState == nil then
+        desiredState = not ScriptState.lockEnabled
+    end
+
+    ScriptState.lockEnabled = desiredState
+
+    if desiredState then
+        acquireLockTarget()
+    else
+        ScriptState.isLockedOn = false
+        ScriptState.targetPlayer = nil
+    end
+end
+
+-- 自瞄锁定逻辑
+RunService.RenderStepped:Connect(function()
+    local state = getgenv().ScriptState
+    
+    if state.lockEnabled and not state.isLockedOn then
+        acquireLockTarget()
+    end
+
+    if state.lockEnabled and state.isLockedOn and state.targetPlayer and state.targetPlayer.Character then
+        if state.aimLockTeamCheck and state.targetPlayer.Team == player.Team then
+            state.isLockedOn = false
+            state.targetPlayer = nil
+            return
+        end
+
+        if state.aimLockVisibleCheck and not IsPlayerVisible(state.targetPlayer) then
+            state.isLockedOn = false
+            state.targetPlayer = nil
+            return
+        end
+
+        local partName = getBodyPart(state.targetPlayer.Character, state.bodyPartSelected)
+        local part = state.targetPlayer.Character:FindFirstChild(partName)
+
+        if part and state.targetPlayer.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+            local predictedPosition = part.Position + (part.AssemblyLinearVelocity * state.predictionFactor)
+            local currentCameraPosition = camera.CFrame.Position
+            
+            -- 原始自瞄逻辑
+            camera.CFrame = CFrame.new(currentCameraPosition, predictedPosition) * CFrame.new(0, 0, state.smoothingFactor)
+        else
+            state.isLockedOn = false
+            state.targetPlayer = nil
+        end
+    end
+end)
+
+-- Desync功能
+RunService.Heartbeat:Connect(function()
+    if getgenv().ScriptState.Desync then
+        local character = player.Character
+        if not character then return end
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        local originalVelocity = humanoidRootPart.Velocity
+
+        local randomOffset = Vector3.new(
+            math.random(-1, 1) * ScriptState.reverseResolveIntensity * 1000,
+            math.random(-1, 1) * ScriptState.reverseResolveIntensity * 1000,
+            math.random(-1, 1) * ScriptState.reverseResolveIntensity * 1000
+        )
+        humanoidRootPart.Velocity = randomOffset
+        humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(
+            0,
+            math.random(-1, 1) * ScriptState.reverseResolveIntensity * 0.001,
+            0
+        )
+        RunService.RenderStepped:Wait()
+        humanoidRootPart.Velocity = originalVelocity
+    end
+end)
+
+-- ESP更新循环
+RunService.RenderStepped:Connect(function()
+    if State.espEnabled then
+        for _, targetPlayer in ipairs(Players:GetPlayers()) do
+            if targetPlayer ~= player then
+                updateESP(targetPlayer)
+            end
+        end
+    end
+end)
+
+-- 音效系统
+local sounds = {
+    ["RIFK7"] = "rbxassetid://9102080552",
+    ["Bubble"] = "rbxassetid://9102092728",
+    ["Minecraft"] = "rbxassetid://5869422451",
+    ["Cod"] = "rbxassetid://160432334",
+    ["Bameware"] = "rbxassetid://6565367558",
+    ["Neverlose"] = "rbxassetid://6565370984",
+    ["Gamesense"] = "rbxassetid://4817809188",
+    ["Rust"] = "rbxassetid://6565371338",
+}
+
+local hitSound = Instance.new("Sound")
+hitSound.Volume = 3
+hitSound.Parent = SoundService
+
+local soundPool = {}
+local soundIndex = 1
+
+local function getNextSound()
+    if soundIndex > #soundPool then
+        local s = hitSound:Clone()
+        s.Parent = workspace
+        s.Looped = false
+        table.insert(soundPool, s)
+    end
+    local s = soundPool[soundIndex]
+    soundIndex = soundIndex + 1
+    return s
+end
+
+local function playHitSound()
+    local s = getNextSound()
+    s:Stop()
+    s:Play()
+end
+
+local function trackPlayer(plr)
+    if plr == player then return end
+
+    plr.CharacterAdded:Connect(function(char)
+        local hum = char:WaitForChild("Humanoid", 10)
+        if not hum then return end
+
+        local lastHealth = hum.Health
+
+        hum.HealthChanged:Connect(function(newHp)
+            local closestPart, closestPlayer = getClosestPlayer()
+            if closestPart and closestPlayer and closestPlayer == plr then
+                if newHp < lastHealth then
+                    playHitSound()
+                end
+                if lastHealth > 0 and newHp <= 0 then
+                    playHitSound()
+                end
+            end
+            lastHealth = newHp
+        end)
+    end)
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    trackPlayer(plr)
+    createESP(plr)
+end
+Players.PlayerAdded:Connect(trackPlayer)
+
+-- 全新UI设计
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "GameCustomUI"
 ScreenGui.Parent = PlayerGui
 ScreenGui.ResetOnSpawn = false
 
+-- 主框架
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 300, 0, 620)
-MainFrame.Position = UDim2.new(0.03, 0, 0.15, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+MainFrame.Size = UDim2.new(0, 400, 0, 800)
+MainFrame.Position = UDim2.new(0.03, 0, 0.1, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.CornerRadius = UDim.new(0, 16)
 MainCorner.Parent = MainFrame
 
+-- 标题栏
 local TitleBar = Instance.new("Frame")
-TitleBar.Size = UDim2.new(1, 0, 0, 45)
-TitleBar.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+TitleBar.Size = UDim2.new(1, 0, 0, 50)
+TitleBar.BackgroundColor3 = Color3.fromRGB(80, 80, 200)
 TitleBar.Parent = MainFrame
 
 local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 12)
+TitleCorner.CornerRadius = UDim.new(0, 16)
 TitleCorner.Parent = TitleBar
 
 local TitleText = Instance.new("TextLabel")
 TitleText.Size = UDim2.new(1, 0, 1, 0)
 TitleText.BackgroundTransparency = 1
-TitleText.Text = "游戏功能面板"
+TitleText.Text = "游戏功能中心"
 TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleText.Font = Enum.Font.SourceSansBold
-TitleText.TextSize = 20
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextSize = 22
 TitleText.Parent = TitleBar
 
-local ContentContainer = Instance.new("Frame")
-ContentContainer.Position = UDim2.new(0, 0, 0, 45)
-ContentContainer.Size = UDim2.new(1, 0, 1, -45)
-ContentContainer.BackgroundTransparency = 1
-ContentContainer.Parent = MainFrame
+-- 选项卡容器
+local TabContainer = Instance.new("Frame")
+TabContainer.Size = UDim2.new(1, 0, 0, 45)
+TabContainer.Position = UDim2.new(0, 0, 0, 50)
+TabContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TabContainer.Parent = MainFrame
 
-local Layout = Instance.new("UIListLayout")
-Layout.Parent = ContentContainer
-Layout.Padding = UDim.new(0, 10)
-Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-Layout.VerticalAlignment = Enum.VerticalAlignment.Top
-Layout.FillDirection = Enum.FillDirection.Vertical
-Layout.SortOrder = Enum.SortOrder.LayoutOrder
+-- 选项卡按钮
+local Tabs = {
+    {name = "移动", id = "move"},
+    {name = "互动", id = "interact"},
+    {name = "碰撞", id = "collision"},
+    {name = "瞄准", id = "aim"},
+    {name = "ESP", id = "esp"},
+    {name = "系统", id = "system"}
+}
 
-local function CreateButton(text, callback, order)
+local TabButtons = {}
+local TabContentFrames = {}
+
+-- 创建选项卡按钮
+for i, tab in ipairs(Tabs) do
+    local tabButton = Instance.new("TextButton")
+    tabButton.Size = UDim2.new(1/#Tabs, 0, 1, 0)
+    tabButton.Position = UDim2.new((i-1)/#Tabs, 0, 0, 0)
+    tabButton.BackgroundColor3 = i == 1 and Color3.fromRGB(80, 80, 200) or Color3.fromRGB(35, 35, 35)
+    tabButton.Text = tab.name
+    tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabButton.Font = Enum.Font.Gotham
+    tabButton.TextSize = 14
+    tabButton.BorderSizePixel = 0
+    tabButton.Parent = TabContainer
+    
+    TabButtons[tab.id] = tabButton
+    
+    -- 创建选项卡内容框架
+    local contentFrame = Instance.new("ScrollingFrame")
+    contentFrame.Name = tab.id .. "Content"
+    contentFrame.Size = UDim2.new(1, 0, 1, -95)
+    contentFrame.Position = UDim2.new(0, 0, 0, 95)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.ScrollBarThickness = 8
+    contentFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 200)
+    contentFrame.Parent = MainFrame
+    
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 12)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.VerticalAlignment = Enum.VerticalAlignment.Top
+    layout.FillDirection = Enum.FillDirection.Vertical
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = contentFrame
+    
+    TabContentFrames[tab.id] = contentFrame
+    
+    -- 默认只显示第一个选项卡
+    if i > 1 then
+        contentFrame.Visible = false
+    end
+    
+    -- 选项卡点击事件
+    tabButton.MouseButton1Click:Connect(function()
+        -- 更新选项卡按钮状态
+        for _, btn in pairs(TabButtons) do
+            btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        end
+        tabButton.BackgroundColor3 = Color3.fromRGB(80, 80, 200)
+        
+        -- 更新内容框架可见性
+        for _, frame in pairs(TabContentFrames) do
+            frame.Visible = false
+        end
+        contentFrame.Visible = true
+    end)
+end
+
+local function CreateButton(text, callback, order, parent)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 45)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.Size = UDim2.new(0.9, 0, 0, 48)
+    btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 18
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 16
     btn.BorderSizePixel = 0
     btn.LayoutOrder = order
-    btn.Parent = ContentContainer
+    btn.Parent = parent or TabContentFrames.move
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = btn
 
     btn.MouseEnter:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+        btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     end)
     btn.MouseLeave:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     end)
     btn.MouseButton1Click:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+        btn.BackgroundColor3 = Color3.fromRGB(80, 80, 200)
         task.wait(0.2)
-        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
         if typeof(callback) == "function" then
             callback()
         end
@@ -114,44 +1364,44 @@ local function CreateButton(text, callback, order)
     return btn
 end
 
-local function CreateTextbox(labelText, placeholder, callback, order)
+local function CreateTextbox(labelText, placeholder, callback, order, parent)
     local container = Instance.new("Frame")
-    container.Size = UDim2.new(0.9, 0, 0, 55)
+    container.Size = UDim2.new(0.9, 0, 0, 60)
     container.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     container.BorderSizePixel = 0
     container.LayoutOrder = order
-    container.Parent = ContentContainer
+    container.Parent = parent or TabContentFrames.move
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = container
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 20)
-    label.Position = UDim2.new(0, 12, 0, 5)
+    label.Position = UDim2.new(0, 15, 0, 8)
     label.BackgroundTransparency = 1
     label.Text = labelText
     label.TextColor3 = Color3.fromRGB(200, 200, 200)
-    label.Font = Enum.Font.SourceSans
+    label.Font = Enum.Font.Gotham
     label.TextSize = 14
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = container
 
     local input = Instance.new("TextBox")
-    input.Size = UDim2.new(1, -24, 0, 22)
-    input.Position = UDim2.new(0, 12, 0, 28)
+    input.Size = UDim2.new(1, -30, 0, 25)
+    input.Position = UDim2.new(0, 15, 0, 32)
     input.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     input.PlaceholderText = placeholder
     input.Text = ""
     input.TextColor3 = Color3.fromRGB(255, 255, 255)
-    input.Font = Enum.Font.SourceSans
+    input.Font = Enum.Font.Gotham
     input.TextSize = 16
     input.ClearTextOnFocus = false
     input.BorderSizePixel = 0
     input.Parent = container
 
     local inputCorner = Instance.new("UICorner")
-    inputCorner.CornerRadius = UDim.new(0, 6)
+    inputCorner.CornerRadius = UDim.new(0, 8)
     inputCorner.Parent = input
 
     local function confirmInput()
@@ -171,48 +1421,158 @@ local function CreateTextbox(labelText, placeholder, callback, order)
     return container, input
 end
 
-local function CreateToggle(labelText, defaultState, callback, order)
+local function CreateDropdown(labelText, options, defaultOption, callback, order, parent)
     local container = Instance.new("Frame")
-    container.Size = UDim2.new(0.9, 0, 0, 45)
+    container.Size = UDim2.new(0.9, 0, 0, 48)
     container.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     container.BorderSizePixel = 0
     container.LayoutOrder = order
-    container.Parent = ContentContainer
+    container.Parent = parent or TabContentFrames.move
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = container
 
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -75, 1, 0)
-    label.Position = UDim2.new(0, 12, 0, 0)
+    label.Size = UDim2.new(1, -85, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = labelText
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.Font = Enum.Font.SourceSans
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 16
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+
+    local dropdown = Instance.new("TextButton")
+    dropdown.Size = UDim2.new(0, 75, 0, 32)
+    dropdown.Position = UDim2.new(1, -85, 0.5, -16)
+    dropdown.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    dropdown.Text = defaultOption
+    dropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+    dropdown.Font = Enum.Font.Gotham
+    dropdown.TextSize = 12
+    dropdown.BorderSizePixel = 0
+    dropdown.Parent = container
+
+    local dropdownCorner = Instance.new("UICorner")
+    dropdownCorner.CornerRadius = UDim.new(0, 16)
+    dropdownCorner.Parent = dropdown
+
+    local dropdownList = Instance.new("ScrollingFrame")
+    dropdownList.Size = UDim2.new(0, 75, 0, 0)
+    dropdownList.Position = UDim2.new(1, -85, 1, 5)
+    dropdownList.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    dropdownList.BorderSizePixel = 0
+    dropdownList.ScrollBarThickness = 4
+    dropdownList.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    dropdownList.Visible = false
+    dropdownList.ZIndex = 10
+    dropdownList.Parent = container
+
+    local dropdownListCorner = Instance.new("UICorner")
+    dropdownListCorner.CornerRadius = UDim.new(0, 8)
+    dropdownListCorner.Parent = dropdownList
+
+    local optionButtons = {}
+
+    local function updateDropdownList()
+        for _, button in ipairs(optionButtons) do
+            button:Destroy()
+        end
+        optionButtons = {}
+
+        local totalHeight = 0
+        for i, option in ipairs(options) do
+            local optionButton = Instance.new("TextButton")
+            optionButton.Size = UDim2.new(1, 0, 0, 32)
+            optionButton.Position = UDim2.new(0, 0, 0, totalHeight)
+            optionButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            optionButton.Text = option
+            optionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            optionButton.Font = Enum.Font.Gotham
+            optionButton.TextSize = 12
+            optionButton.BorderSizePixel = 0
+            optionButton.ZIndex = 11
+            optionButton.Parent = dropdownList
+
+            local optionButtonCorner = Instance.new("UICorner")
+            optionButtonCorner.CornerRadius = UDim.new(0, 8)
+            optionButtonCorner.Parent = optionButton
+
+            optionButton.MouseButton1Click:Connect(function()
+                dropdown.Text = option
+                dropdownList.Visible = false
+                callback(option)
+            end)
+
+            optionButton.MouseEnter:Connect(function()
+                optionButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+            end)
+
+            optionButton.MouseLeave:Connect(function()
+                optionButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            end)
+
+            table.insert(optionButtons, optionButton)
+            totalHeight = totalHeight + 32
+        end
+
+        dropdownList.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+        dropdownList.Size = UDim2.new(0, 75, 0, math.min(totalHeight, 160))
+    end
+
+    updateDropdownList()
+
+    dropdown.MouseButton1Click:Connect(function()
+        dropdownList.Visible = not dropdownList.Visible
+    end)
+
+    return container, dropdown, updateDropdownList
+end
+
+local function CreateToggle(labelText, defaultState, callback, order, parent)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0.9, 0, 0, 48)
+    container.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    container.BorderSizePixel = 0
+    container.LayoutOrder = order
+    container.Parent = parent or TabContentFrames.move
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = container
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -85, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.Gotham
     label.TextSize = 16
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = container
 
     local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0, 65, 0, 30)
-    toggle.Position = UDim2.new(1, -75, 0.5, -15)
-    toggle.BackgroundColor3 = defaultState and Color3.fromRGB(0, 150, 200) or Color3.fromRGB(70, 70, 70)
+    toggle.Size = UDim2.new(0, 75, 0, 32)
+    toggle.Position = UDim2.new(1, -85, 0.5, -16)
+    toggle.BackgroundColor3 = defaultState and Color3.fromRGB(80, 80, 200) or Color3.fromRGB(70, 70, 70)
     toggle.Text = defaultState and "开" or "关"
     toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggle.Font = Enum.Font.SourceSans
+    toggle.Font = Enum.Font.Gotham
     toggle.TextSize = 14
     toggle.BorderSizePixel = 0
     toggle.Parent = container
 
     local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 15)
+    toggleCorner.CornerRadius = UDim.new(0, 16)
     toggleCorner.Parent = toggle
 
     local isEnabled = defaultState
     toggle.MouseButton1Click:Connect(function()
         isEnabled = not isEnabled
-        toggle.BackgroundColor3 = isEnabled and Color3.fromRGB(0, 150, 200) or Color3.fromRGB(70, 70, 70)
+        toggle.BackgroundColor3 = isEnabled and Color3.fromRGB(80, 80, 200) or Color3.fromRGB(70, 70, 70)
         toggle.Text = isEnabled and "开" or "关"
         callback(isEnabled)
     end)
@@ -222,12 +1582,97 @@ end
 
 
 
+
+
+-- 互动距离设置功能
+local function setInteractDistance(distance)
+    State.interactDistance = distance
+    print("[UI] 互动距离已设置为：", State.interactDistance)
+    
+    -- 如果快速互动已启用，立即应用新的距离设置
+    if State.isFastInteract then
+        for _, prompt in ipairs(game:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") then
+                prompt.MaxActivationDistance = State.interactDistance
+            end
+        end
+    end
+end
+
+-- 独立功能：调整上个互动对象的距离
+local function adjustLastInteractedObjectDistance()
+    if State.lastInteractedObject then
+        print("[UI] 正在调整上个互动对象的距离：", State.lastInteractedObject:GetFullName())
+        
+        -- 查找对象上的ProximityPrompt
+        local prompt = State.lastInteractedObject:FindFirstChildOfClass("ProximityPrompt")
+        if not prompt then
+            -- 向上查找父对象
+            local parent = State.lastInteractedObject.Parent
+            while parent and not prompt do
+                prompt = parent:FindFirstChildOfClass("ProximityPrompt")
+                parent = parent.Parent
+            end
+        end
+        
+        if prompt then
+            -- 设置互动距离为999999999
+            local newDistance = 999999999
+            
+            -- 保存原始距离（如果还没有保存）
+            if not prompt:GetAttribute("OriginalMaxActivationDistance") then
+                prompt:SetAttribute("OriginalMaxActivationDistance", prompt.MaxActivationDistance)
+            end
+            
+            -- 设置新的距离
+            prompt.MaxActivationDistance = newDistance
+            print("[UI] 上个互动对象距离已设置为：", newDistance)
+        else
+            print("[UI] 未在该对象上找到ProximityPrompt")
+        end
+    else
+        print("[UI] 没有记录到最近互动的对象")
+    end
+end
+
+-- 独立功能：还原所有互动距离到原始值
+local function restoreOriginalInteractDistances()
+    print("[UI] 正在还原所有互动距离到原始值")
+    
+    -- 遍历所有互动提示，恢复原始距离（添加错误处理）
+    local success, err = pcall(function()
+        for _, prompt in ipairs(game:GetDescendants()) do
+            if prompt and prompt.Parent and prompt:IsA("ProximityPrompt") then
+                local success2, err2 = pcall(function()
+                    local originalDistance = prompt:GetAttribute("OriginalMaxActivationDistance")
+                    if originalDistance then
+                        prompt.MaxActivationDistance = originalDistance
+                        prompt:SetAttribute("OriginalMaxActivationDistance", nil)
+                        print("[UI] 已还原对象的距离：", prompt.Parent:GetFullName())
+                    end
+                end)
+                if not success2 then
+                    warn("[UI] 还原互动距离失败:", err2)
+                end
+            end
+        end
+    end)
+    
+    if not success then
+        warn("[UI] 还原互动距离时出错:", err)
+    end
+    
+    print("[UI] 所有互动距离已还原到原始值")
+end
+
 -- 快速互动功能
 local function setFastInteract(status)
     State.isFastInteract = status
     if State.isFastInteract then
         print("[UI] 快速互动已启用")
         if State.interactConnection then State.interactConnection:Disconnect() end
+        
+        -- 监听按钮按下开始事件
         State.interactConnection = ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt)
             if not prompt:GetAttribute("OriginalHoldTime") then
                 prompt:SetAttribute("OriginalHoldTime", prompt.HoldDuration)
@@ -238,6 +1683,7 @@ local function setFastInteract(status)
             prompt.HoldDuration = 0
             prompt.MaxActivationDistance = State.interactDistance -- 使用设置的互动距离
         end)
+        
         for _, prompt in ipairs(game:GetDescendants()) do
             if prompt:IsA("ProximityPrompt") then
                 if not prompt:GetAttribute("OriginalHoldTime") then
@@ -256,19 +1702,32 @@ local function setFastInteract(status)
             State.interactConnection:Disconnect()
             State.interactConnection = nil
         end
-        for _, prompt in ipairs(game:GetDescendants()) do
-            if prompt:IsA("ProximityPrompt") then
-                local original = prompt:GetAttribute("OriginalHoldTime")
-                if original then
-                    prompt.HoldDuration = original
-                    prompt:SetAttribute("OriginalHoldTime", nil)
-                end
-                local originalDistance = prompt:GetAttribute("OriginalMaxActivationDistance")
-                if originalDistance then
-                    prompt.MaxActivationDistance = originalDistance
-                    prompt:SetAttribute("OriginalMaxActivationDistance", nil)
+        
+        -- 恢复所有互动提示的原始值（添加错误处理）
+        local success, err = pcall(function()
+            for _, prompt in ipairs(game:GetDescendants()) do
+                if prompt and prompt.Parent and prompt:IsA("ProximityPrompt") then
+                    local success2, err2 = pcall(function()
+                        local original = prompt:GetAttribute("OriginalHoldTime")
+                        if original then
+                            prompt.HoldDuration = original
+                            prompt:SetAttribute("OriginalHoldTime", nil)
+                        end
+                        local originalDistance = prompt:GetAttribute("OriginalMaxActivationDistance")
+                        if originalDistance then
+                            prompt.MaxActivationDistance = originalDistance
+                            prompt:SetAttribute("OriginalMaxActivationDistance", nil)
+                        end
+                    end)
+                    if not success2 then
+                        warn("[UI] 恢复互动提示失败:", err2)
+                    end
                 end
             end
+        end)
+        
+        if not success then
+            warn("[UI] 快速互动关闭时出错:", err)
         end
     end
 end
@@ -308,28 +1767,371 @@ local function toggleNoClip(enabled)
     end
 end
 
+-- 玩家碰撞箱扩大功能
+local function toggleHitboxExpansion(enabled)
+    State.isHitboxExpanded = enabled
+    
+    -- 清理所有现有连接
+    if State.hitboxConnection then
+        State.hitboxConnection:Disconnect()
+        State.hitboxConnection = nil
+    end
+    
+    if State.playerAddedConnection then
+        State.playerAddedConnection:Disconnect()
+        State.playerAddedConnection = nil
+    end
+    
+    if State.playerRemovingConnection then
+        State.playerRemovingConnection:Disconnect()
+        State.playerRemovingConnection = nil
+    end
+    
+    if State.isHitboxExpanded then
+        print("[UI] 玩家碰撞箱已扩大")
+        
+        -- 应用碰撞箱扩大到单个玩家
+        local function applyHitboxExpansion(otherPlayer)
+            if otherPlayer == player then return end
+            
+            local character = otherPlayer.Character
+            if not character then return end
+            
+            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+            if not humanoidRootPart then return end
+            
+            -- 保存原始属性
+            local playerData = State.hitboxOriginalData[otherPlayer] or {}
+            if not playerData.originalSize then
+                playerData.originalSize = humanoidRootPart.Size
+            end
+            if not playerData.originalTransparency then
+                playerData.originalTransparency = humanoidRootPart.Transparency
+            end
+            State.hitboxOriginalData[otherPlayer] = playerData
+            
+            -- 扩大碰撞箱
+            local multiplier = State.hitboxSize / 5
+            humanoidRootPart.Size = playerData.originalSize * multiplier
+            humanoidRootPart.Transparency = State.hitboxTransparency
+        end
+        
+        -- 恢复碰撞箱到单个玩家
+        local function restoreHitboxExpansion(otherPlayer)
+            if otherPlayer == player then return end
+            
+            local playerData = State.hitboxOriginalData[otherPlayer]
+            if not playerData then return end
+            
+            -- 恢复原始属性（添加错误处理）
+            pcall(function()
+                local character = otherPlayer.Character
+                if character and character.Parent then
+                    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+                    if humanoidRootPart and humanoidRootPart.Parent then
+                        if playerData.originalSize then
+                            humanoidRootPart.Size = playerData.originalSize
+                        end
+                        if playerData.originalTransparency then
+                            humanoidRootPart.Transparency = playerData.originalTransparency
+                        end
+                    end
+                end
+            end)
+        end
+        
+        -- 立即应用到所有现有玩家
+        for _, otherPlayer in ipairs(Players:GetPlayers()) do
+            applyHitboxExpansion(otherPlayer)
+        end
+        
+        -- 监听新玩家加入和角色重生
+        State.playerAddedConnection = Players.PlayerAdded:Connect(function(newPlayer)
+            if State.isHitboxExpanded then
+                -- 监听角色重生
+                newPlayer.CharacterAdded:Connect(function()
+                    -- 等待角色完全加载
+                    task.wait(0.5)
+                    applyHitboxExpansion(newPlayer)
+                end)
+                -- 如果角色已经存在
+                if newPlayer.Character then
+                    applyHitboxExpansion(newPlayer)
+                end
+            end
+        end)
+        
+        -- 监听玩家离开
+        State.playerRemovingConnection = Players.PlayerRemoving:Connect(function(removingPlayer)
+            State.hitboxOriginalData[removingPlayer] = nil
+        end)
+        
+        -- 持续更新，确保碰撞箱始终存在
+        State.hitboxConnection = RunService.Heartbeat:Connect(function()
+            if State.isHitboxExpanded then
+                for otherPlayer, playerData in pairs(State.hitboxOriginalData) do
+                    if otherPlayer ~= player then
+                        local character = otherPlayer.Character
+                        if character and character.Parent then
+                            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+                            if humanoidRootPart and humanoidRootPart.Parent then
+                                pcall(function()
+                                    local multiplier = State.hitboxSize / 5
+                                    humanoidRootPart.Size = playerData.originalSize * multiplier
+                                    humanoidRootPart.Transparency = State.hitboxTransparency
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+        
+    else
+        print("[UI] 玩家碰撞箱已恢复")
+        
+        -- 恢复所有玩家的原始属性
+        for otherPlayer, _ in pairs(State.hitboxOriginalData) do
+            restoreHitboxExpansion(otherPlayer)
+        end
+        
+        -- 清理数据
+        State.hitboxOriginalData = {}
+    end
+end
 
+-- 人物旋转功能
+local function toggleSpin(enabled)
+    State.isSpinEnabled = enabled
+    
+    if State.spinConnection then
+        State.spinConnection:Disconnect()
+        State.spinConnection = nil
+    end
+    
+    if State.isSpinEnabled then
+        print("[UI] 人物旋转已开启")
+        State.spinConnection = RunService.Heartbeat:Connect(function()
+            local char = player.Character
+            if not char then return end
+            local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+            if not humanoidRootPart then return end
+            
+            local currentCFrame = humanoidRootPart.CFrame
+            local rotationSpeed = State.spinSpeed
+            local newCFrame = currentCFrame * CFrame.Angles(0, math.rad(rotationSpeed), 0)
+            humanoidRootPart.CFrame = newCFrame
+        end)
+    else
+        print("[UI] 人物旋转已关闭")
+    end
+end
 
+-- 自动攻击功能
+local function toggleAutoAttack(enabled)
+    State.isAutoAttackEnabled = enabled
+    
+    if State.autoAttackConnection then
+        State.autoAttackConnection:Disconnect()
+        State.autoAttackConnection = nil
+    end
+    
+    if State.isAutoAttackEnabled then
+        print("[UI] 自动攻击已开启")
+        
+        local lastAttackTime = 0
+        
+        State.autoAttackConnection = RunService.Heartbeat:Connect(function()
+            local char = player.Character
+            if not char then return end
+            
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if not humanoid or humanoid.Health <= 0 then return end
+            
+            local currentTime = tick()
+            if currentTime - lastAttackTime < State.autoAttackDelay then
+                return
+            end
+            
+            -- 查找范围内的最近玩家（不检查屏幕可见性）
+            local closestPlayer = nil
+            local closestDistance = State.autoAttackRange
+            
+            -- 如果有自定义锁定的玩家，优先使用
+            if State.customLockedPlayer then
+                local targetCharacter = State.customLockedPlayer.Character
+                if targetCharacter then
+                    local targetHumanoid = targetCharacter:FindFirstChildOfClass("Humanoid")
+                    local targetRootPart = targetCharacter:FindFirstChild("HumanoidRootPart")
+                    if targetHumanoid and targetRootPart and targetHumanoid.Health > 0 then
+                        local distance = (char.HumanoidRootPart.Position - targetRootPart.Position).Magnitude
+                        if distance <= State.autoAttackRange then
+                            closestPlayer = State.customLockedPlayer
+                            closestDistance = distance
+                        end
+                    end
+                end
+            end
+            
+            -- 如果没有自定义锁定玩家或锁定玩家不在范围内，查找最近的玩家
+            if not closestPlayer then
+                for _, otherPlayer in ipairs(Players:GetPlayers()) do
+                    if otherPlayer == player then continue end
+                    
+                    local targetCharacter = otherPlayer.Character
+                    if not targetCharacter then continue end
+                    
+                    local targetHumanoid = targetCharacter:FindFirstChildOfClass("Humanoid")
+                    if not targetHumanoid or targetHumanoid.Health <= 0 then continue end
+                    
+                    local targetRootPart = targetCharacter:FindFirstChild("HumanoidRootPart")
+                    if not targetRootPart then continue end
+                    
+                    -- 检查团队
+                    if ScriptState.aimLockTeamCheck then
+                        local onSameTeam = playersOnSameTeam(otherPlayer)
+                        if onSameTeam then continue end
+                    end
+                    
+                    local distance = (char.HumanoidRootPart.Position - targetRootPart.Position).Magnitude
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestPlayer = otherPlayer
+                    end
+                end
+            end
+            
+            if closestPlayer then
+                local targetCharacter = closestPlayer.Character
+                if targetCharacter then
+                    local targetHumanoid = targetCharacter:FindFirstChildOfClass("Humanoid")
+                    if targetHumanoid and targetHumanoid.Health > 0 then
+                        -- 尝试攻击目标
+                        pcall(function()
+                            -- 检查是否有工具
+                            local tool = char:FindFirstChildOfClass("Tool")
+                            if tool then
+                                -- 激活工具
+                                tool:Activate()
+                                lastAttackTime = currentTime
+                                print("[UI] 自动攻击：使用工具攻击", closestPlayer.Name)
+                            else
+                                -- 尝试瞬移到目标附近攻击
+                                local targetPart = targetCharacter:FindFirstChild("HumanoidRootPart")
+                                if targetPart then
+                                    local distance = (char.HumanoidRootPart.Position - targetPart.Position).Magnitude
+                                    if distance <= State.autoAttackRange then
+                                        if State.teleportMode == "behind" then
+                                            -- 瞬移到目标身后
+                                            local lookVector = targetPart.CFrame.LookVector
+                                            local behindPosition = targetPart.Position - lookVector * 5
+                                            char.HumanoidRootPart.CFrame = CFrame.new(behindPosition, targetPart.Position)
+                                            lastAttackTime = currentTime
+                                            print("[UI] 自动攻击：瞬移到身后攻击", closestPlayer.Name)
+                                        elseif State.teleportMode == "feet" then
+                                            -- 瞬移到目标脚下
+                                            local feetPosition = targetPart.Position - Vector3.new(0, 5, 0)
+                                            char.HumanoidRootPart.CFrame = CFrame.new(feetPosition, targetPart.Position)
+                                            lastAttackTime = currentTime
+                                            print("[UI] 自动攻击：瞬移到脚下攻击", closestPlayer.Name)
+                                        elseif State.teleportMode == "head" then
+                                            -- 瞬移到目标头上
+                                            local headPosition = targetPart.Position + Vector3.new(0, 5, 0)
+                                            char.HumanoidRootPart.CFrame = CFrame.new(headPosition, targetPart.Position)
+                                            lastAttackTime = currentTime
+                                            print("[UI] 自动攻击：瞬移到头上攻击", closestPlayer.Name)
+                                        else
+                                            -- 以玩家为中心旋转
+                                            State.attackRotationAngle = State.attackRotationAngle + State.attackRotationSpeed
+                                            if State.attackRotationAngle >= 360 then
+                                                State.attackRotationAngle = State.attackRotationAngle - 360
+                                            end
+                                            local angle = math.rad(State.attackRotationAngle)
+                                            local distance = 5
+                                            local offsetX = math.cos(angle) * distance
+                                            local offsetZ = math.sin(angle) * distance
+                                            local newPosition = targetPart.Position + Vector3.new(offsetX, 0, offsetZ)
+                                            char.HumanoidRootPart.CFrame = CFrame.new(newPosition, targetPart.Position)
+                                            -- 尝试攻击
+                                            local attackTool = char:FindFirstChildOfClass("Tool")
+                                            if attackTool then
+                                                attackTool:Activate()
+                                            end
+                                            lastAttackTime = currentTime
+                                            print("[UI] 自动攻击：旋转攻击", closestPlayer.Name)
+                                        end
+                                    end
+                                end
+                            end
+                        end)
+                    end
+                end
+            end
+        end)
+    else
+        print("[UI] 自动攻击已关闭")
+    end
+end
+
+-- 攻击范围显示功能
+local function toggleAttackRangeVisible(enabled)
+    State.isAttackRangeVisible = enabled
+    
+    if State.attackRangeIndicator then
+        State.attackRangeIndicator:Destroy()
+        State.attackRangeIndicator = nil
+    end
+    
+    if State.isAttackRangeVisible then
+        print("[UI] 攻击范围显示已开启")
+        
+        -- 创建攻击范围指示器
+        local rangeIndicator = Instance.new("Part")
+        rangeIndicator.Name = "AttackRangeIndicator"
+        rangeIndicator.Shape = Enum.PartType.Ball
+        rangeIndicator.Size = Vector3.new(State.autoAttackRange * 2, State.autoAttackRange * 2, State.autoAttackRange * 2)
+        rangeIndicator.Color = Color3.fromRGB(255, 0, 0)
+        rangeIndicator.Transparency = 0.7
+        rangeIndicator.Material = Enum.Material.Neon
+        rangeIndicator.CanCollide = false
+        rangeIndicator.Anchored = true
+        rangeIndicator.Parent = Workspace
+        
+        State.attackRangeIndicator = rangeIndicator
+        
+        -- 持续更新位置
+        State.attackRangeConnection = RunService.Heartbeat:Connect(function()
+            local char = player.Character
+            if not char then return end
+            
+            local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+            if not humanoidRootPart then return end
+            
+            if State.attackRangeIndicator then
+                State.attackRangeIndicator.Position = humanoidRootPart.Position
+                State.attackRangeIndicator.Size = Vector3.new(State.autoAttackRange * 2, State.autoAttackRange * 2, State.autoAttackRange * 2)
+            end
+        end)
+    else
+        print("[UI] 攻击范围显示已关闭")
+        if State.attackRangeConnection then
+            State.attackRangeConnection:Disconnect()
+            State.attackRangeConnection = nil
+        end
+    end
+end
+
+-- 移动选项卡
 CreateTextbox("设置跑步速度", "输入数字（如20）", function(speed)
     State.runSpeed = speed
     print("[UI] 跑步速度已设置为：", State.runSpeed)
-end, 1)
+end, 1, TabContentFrames.move)
 
-CreateTextbox("设置互动距离", "输入数字（10-5000）", function(distance)
-    -- 限制距离范围在10-5000之间
-    distance = math.clamp(distance, 10, 5000)
-    State.interactDistance = distance
-    print("[UI] 互动距离已设置为：", State.interactDistance)
-    
-    -- 如果快速互动已启用，立即应用新的距离设置
-    if State.isFastInteract then
-        for _, prompt in ipairs(game:GetDescendants()) do
-            if prompt:IsA("ProximityPrompt") then
-                prompt.MaxActivationDistance = State.interactDistance
-            end
-        end
-    end
-end, 2)
+-- 快捷键开关
+CreateToggle("启用跑步快捷键", false, function(enabled)
+    State.isRunKeyEnabled = enabled
+    print("[UI] 跑步快捷键已"..(enabled and "启用" or "禁用"))
+end, 2, TabContentFrames.move)
 
 CreateToggle("开启快速跑步", false, function(enabled)
     if enabled then
@@ -357,43 +2159,468 @@ CreateToggle("开启快速跑步", false, function(enabled)
             State.runConnection = nil
         end
     end
-end, 3)
+end, 3, TabContentFrames.move)
 
-CreateButton("开启快速互动", function() setFastInteract(true) end, 4)
-CreateButton("关闭快速互动", function() setFastInteract(false) end, 5)
+CreateTextbox("设置旋转速度", "输入数字（如10）", function(speed)
+    State.spinSpeed = tonumber(speed)
+    print("[UI] 旋转速度已设置为：", State.spinSpeed)
+end, 4, TabContentFrames.move)
 
-CreateToggle("穿墙", false, toggleNoClip, 6)
+CreateToggle("开启人物旋转", false, toggleSpin, 5, TabContentFrames.move)
 
+-- 自动攻击功能
+CreateToggle("自动攻击", false, toggleAutoAttack, 6, TabContentFrames.move)
+CreateTextbox("攻击范围", "输入数字（如20）", function(range)
+    State.autoAttackRange = tonumber(range)
+    print("[UI] 攻击范围已设置为：", State.autoAttackRange)
+    -- 如果攻击范围指示器存在，更新大小
+    if State.attackRangeIndicator then
+        State.attackRangeIndicator.Size = Vector3.new(State.autoAttackRange * 2, State.autoAttackRange * 2, State.autoAttackRange * 2)
+    end
+end, 7, TabContentFrames.move)
+CreateToggle("显示攻击范围", false, toggleAttackRangeVisible, 8, TabContentFrames.move)
+
+-- 获取当前所有玩家列表
+local function getPlayerList()
+    local playerList = {"无"}
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player then
+            table.insert(playerList, otherPlayer.Name)
+        end
+    end
+    return playerList
+end
+
+-- 创建玩家选择下拉菜单
+local playerDropdown, playerDropdownButton, updatePlayerDropdown = CreateDropdown("选择锁定玩家", getPlayerList(), "无", function(selectedPlayer)
+    if selectedPlayer == "无" then
+        State.customLockedPlayer = nil
+        print("[UI] 已清除玩家锁定")
+    else
+        local targetPlayer = Players:FindFirstChild(selectedPlayer)
+        if targetPlayer then
+            State.customLockedPlayer = targetPlayer
+            print("[UI] 已锁定玩家：", targetPlayer.Name)
+        else
+            warn("[UI] 未找到玩家：", selectedPlayer)
+            State.customLockedPlayer = nil
+        end
+    end
+end, 9, TabContentFrames.move)
+
+-- 监听玩家加入和离开，更新玩家列表
+Players.PlayerAdded:Connect(function(newPlayer)
+    updatePlayerDropdown()
+    createESP(newPlayer)
+    print("[UI] 玩家加入：", newPlayer.Name)
+end)
+
+Players.PlayerRemoving:Connect(function(removedPlayer)
+    if State.customLockedPlayer == removedPlayer then
+        State.customLockedPlayer = nil
+        playerDropdownButton.Text = "无"
+        print("[UI] 锁定的玩家已离开：", removedPlayer.Name)
+    end
+    removeESP(removedPlayer)
+    updatePlayerDropdown()
+    print("[UI] 玩家离开：", removedPlayer.Name)
+end)
+
+CreateButton("刷新玩家列表", function()
+    updatePlayerDropdown()
+    local playerList = getPlayerList()
+    print("[UI] 玩家列表已刷新")
+    for _, playerName in ipairs(playerList) do
+        print("[UI] -", playerName)
+    end
+end, 9, TabContentFrames.move)
+
+-- 旋转速度调节
+CreateTextbox("旋转速度", "输入数字（如10）", function(value)
+    State.attackRotationSpeed = tonumber(value)
+    print("[UI] 旋转速度已设置为：", State.attackRotationSpeed)
+end, 10, TabContentFrames.move)
+
+-- 瞬移模式选择
+CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋转", "瞬移到脚下", "瞬移到头上"}, "以锁定玩家为中心旋转", function(value)
+    if value == "瞬移到身后" then
+        State.teleportMode = "behind"
+    elseif value == "以锁定玩家为中心旋转" then
+        State.teleportMode = "rotate"
+    elseif value == "瞬移到脚下" then
+        State.teleportMode = "feet"
+    elseif value == "瞬移到头上" then
+        State.teleportMode = "head"
+    end
+    print("[UI] 瞬移模式已设置为：", value)
+end, 11, TabContentFrames.move)
+
+-- 互动选项卡
+CreateTextbox("设置互动距离", "输入数字（10-5000）", function(distance)
+    -- 限制距离范围在10-5000之间
+    distance = math.clamp(distance, 10, 5000)
+    setInteractDistance(distance)
+end, 1, TabContentFrames.interact)
+CreateButton("调整上个互动对象距离", function()
+    adjustLastInteractedObjectDistance()
+end, 2, TabContentFrames.interact)
+CreateButton("还原所有互动距离", function()
+    restoreOriginalInteractDistances()
+end, 3, TabContentFrames.interact)
+CreateButton("开启快速互动", function() setFastInteract(true) end, 4, TabContentFrames.interact)
+CreateButton("关闭快速互动", function() setFastInteract(false) end, 5, TabContentFrames.interact)
+
+-- 碰撞选项卡
+CreateToggle("穿墙", false, toggleNoClip, 1, TabContentFrames.collision)
+CreateTextbox("设置碰撞箱大小", "输入数字（如5）", function(size)
+    State.hitboxSize = tonumber(size)
+    print("[UI] 碰撞箱大小已设置为：", State.hitboxSize)
+    -- 如果碰撞箱已开启，立即更新
+    if State.isHitboxExpanded then
+        for otherPlayer, _ in pairs(State.hitboxOriginalData) do
+            local character = otherPlayer.Character
+            if character then
+                local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+                if humanoidRootPart then
+                    local playerData = State.hitboxOriginalData[otherPlayer]
+                    if playerData and playerData.originalSize then
+                        local multiplier = State.hitboxSize / 5
+                        humanoidRootPart.Size = playerData.originalSize * multiplier
+                    end
+                end
+            end
+        end
+    end
+end, 2, TabContentFrames.collision)
+CreateTextbox("设置碰撞箱透明度", "输入数字（如0.5）", function(transparency)
+    State.hitboxTransparency = tonumber(transparency)
+    print("[UI] 碰撞箱透明度已设置为：", State.hitboxTransparency)
+    -- 如果碰撞箱已开启，立即更新
+    if State.isHitboxExpanded then
+        for otherPlayer, _ in pairs(State.hitboxOriginalData) do
+            local character = otherPlayer.Character
+            if character then
+                local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+                if humanoidRootPart then
+                    humanoidRootPart.Transparency = State.hitboxTransparency
+                end
+            end
+        end
+    end
+end, 3, TabContentFrames.collision)
+CreateToggle("开启碰撞箱扩大", false, toggleHitboxExpansion, 4, TabContentFrames.collision)
+
+-- 系统选项卡
 CreateButton("摧毁面板", function()
     print("[UI] 面板已摧毁")
-    -- 清理所有连接
-    if State.noClipConnection then
-        State.noClipConnection:Disconnect()
+    
+    -- 使用pcall确保即使出错也能继续执行
+    local success, err = pcall(function()
+        -- 先关闭碰撞箱扩大功能
+        if State.isHitboxExpanded then
+            toggleHitboxExpansion(false)
+        end
+        
+        -- 关闭快速互动功能
+        if State.isFastInteract then
+            setFastInteract(false)
+        end
+        
+        -- 关闭穿墙功能
+        if State.isNoClipEnabled then
+            toggleNoClip(false)
+        end
+        
+        -- 关闭快速跑步功能
+        if State.runConnection then
+            State.runConnection:Disconnect()
+            State.runConnection = nil
+        end
+        
+        -- 关闭人物旋转功能
+        if State.spinConnection then
+            State.spinConnection:Disconnect()
+            State.spinConnection = nil
+        end
+        
+        -- 关闭自动攻击功能
+        if State.autoAttackConnection then
+            State.autoAttackConnection:Disconnect()
+            State.autoAttackConnection = nil
+        end
+        
+        -- 关闭攻击范围显示
+        if State.attackRangeIndicator then
+            State.attackRangeIndicator:Destroy()
+            State.attackRangeIndicator = nil
+        end
+        if State.attackRangeConnection then
+            State.attackRangeConnection:Disconnect()
+            State.attackRangeConnection = nil
+        end
+        
+        -- 关闭夜视功能
+        if State.nightVisionConnection then
+            State.nightVisionConnection:Disconnect()
+            State.nightVisionConnection = nil
+        end
+        
+        -- 清理其他连接
+        if State.interactConnection then
+            State.interactConnection:Disconnect()
+        end
+        if State.hitboxConnection then
+            State.hitboxConnection:Disconnect()
+        end
+        if State.playerAddedConnection then
+            State.playerAddedConnection:Disconnect()
+        end
+        if State.playerRemovingConnection then
+            State.playerRemovingConnection:Disconnect()
+        end
+        if State.promptTriggeredConnection then
+            State.promptTriggeredConnection:Disconnect()
+        end
+        if State.promptButtonHoldBeganConnection then
+            State.promptButtonHoldBeganConnection:Disconnect()
+        end
+        if State.inputConnection then
+            State.inputConnection:Disconnect()
+        end
+    end)
+    
+    if not success then
+        warn("[UI] 摧毁面板时出错:", err)
     end
-    if State.runConnection then
-        State.runConnection:Disconnect()
+    
+    -- 销毁UI
+    if ScreenGui then
+        ScreenGui:Destroy()
     end
-    if State.interactConnection then
-        State.interactConnection:Disconnect()
-    end
-    if State.inputConnection then
-        State.inputConnection:Disconnect()
-    end
-    ScreenGui:Destroy()
-end, 7)
-
+    
+    print("[UI] 面板已完全摧毁")
+end, 1, TabContentFrames.system)
 CreateButton("重新进入服务器", function()
     print("[UI] 正在重新进入服务器...")
     local placeId = game.PlaceId
     local teleportOptions = Instance.new("TeleportOptions")
     teleportOptions.ShouldReserveServer = false
     TeleportService:Teleport(placeId, player, teleportOptions)
-end, 8)
+end, 2, TabContentFrames.system)
+CreateButton("自杀", function()
+    print("[UI] 自杀")
+    local character = player.Character
+    if character then
+        local humanoid = character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.Health = 0
+        end
+    end
+end, 3, TabContentFrames.system)
+CreateButton("加入单人服务器", function()
+    print("[UI] 正在查找人最少的服务器...")
+    local placeId = game.PlaceId
+    
+    TeleportService:GetInstances(placeId):andThen(function(serverInstances)
+        if not serverInstances or #serverInstances == 0 then
+            print("[UI] 未找到服务器实例")
+            return
+        end
+        
+        local bestServer = nil
+        local minPlayers = math.huge
+        
+        for _, serverInstance in ipairs(serverInstances) do
+            if serverInstance.PlayerCount < minPlayers then
+                minPlayers = serverInstance.PlayerCount
+                bestServer = serverInstance
+            end
+        end
+        
+        if bestServer then
+            print("[UI] 找到人最少的服务器，玩家数：", minPlayers)
+            local teleportOptions = Instance.new("TeleportOptions")
+            teleportOptions.ShouldReserveServer = false
+            TeleportService:TeleportToPlaceInstance(placeId, bestServer, player, teleportOptions)
+        else
+            print("[UI] 未找到合适的服务器")
+        end
+    end, function(err)
+        print("[UI] 获取服务器列表失败：", err)
+    end)
+end, 4, TabContentFrames.system)
+
+-- 瞄准选项卡
+CreateToggle("自瞄锁定", false, function(enabled)
+    toggleLockOnPlayer(enabled)
+    print("[UI] 自瞄锁定已"..(enabled and "启用" or "禁用"))
+end, 1, TabContentFrames.aim)
+
+CreateToggle("团队检查", false, function(enabled)
+    ScriptState.aimLockTeamCheck = enabled
+    print("[UI] 团队检查已"..(enabled and "启用" or "禁用"))
+end, 2, TabContentFrames.aim)
+
+CreateToggle("可见性检查", false, function(enabled)
+    ScriptState.aimLockVisibleCheck = enabled
+    print("[UI] 可见性检查已"..(enabled and "启用" or "禁用"))
+end, 3, TabContentFrames.aim)
+
+CreateToggle("生命检查", false, function(enabled)
+    ScriptState.aimLockAliveCheck = enabled
+    print("[UI] 生命检查已"..(enabled and "启用" or "禁用"))
+end, 4, TabContentFrames.aim)
+
+CreateDropdown("瞄准部位", {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso", "LeftArm", "RightArm", "LeftLeg", "RightLeg"}, "Head", function(value)
+    ScriptState.bodyPartSelected = value
+    print("[UI] 瞄准部位已设置为：", value)
+end, 5, TabContentFrames.aim)
+
+CreateTextbox("平滑因子", "输入数字（如0.1）", function(value)
+    ScriptState.smoothingFactor = tonumber(value)
+    print("[UI] 平滑因子已设置为：", ScriptState.smoothingFactor)
+end, 6, TabContentFrames.aim)
+
+CreateTextbox("预测因子", "输入数字（如0.0）", function(value)
+    ScriptState.predictionFactor = tonumber(value)
+    print("[UI] 预测因子已设置为：", ScriptState.predictionFactor)
+end, 7, TabContentFrames.aim)
+
+-- ESP选项卡
+CreateButton("开启ESP", function()
+    State.espEnabled = not State.espEnabled
+    print("[UI] ESP已"..(State.espEnabled and "开启" or "关闭"))
+end, 1, TabContentFrames.esp)
+
+CreateButton("Box ESP", function()
+    State.espSettings.BoxESP = not State.espSettings.BoxESP
+    print("[UI] Box ESP已"..(State.espSettings.BoxESP and "开启" or "关闭"))
+end, 2, TabContentFrames.esp)
+
+CreateButton("Tracer ESP", function()
+    State.espSettings.TracerESP = not State.espSettings.TracerESP
+    print("[UI] Tracer ESP已"..(State.espSettings.TracerESP and "开启" or "关闭"))
+end, 3, TabContentFrames.esp)
+
+CreateButton("Health ESP", function()
+    State.espSettings.HealthESP = not State.espSettings.HealthESP
+    print("[UI] Health ESP已"..(State.espSettings.HealthESP and "开启" or "关闭"))
+end, 4, TabContentFrames.esp)
+
+CreateButton("Name ESP", function()
+    State.espSettings.NameESP = not State.espSettings.NameESP
+    print("[UI] Name ESP已"..(State.espSettings.NameESP and "开启" or "关闭"))
+end, 5, TabContentFrames.esp)
+
+CreateButton("Skeleton ESP", function()
+    State.espSettings.SkeletonESP = not State.espSettings.SkeletonESP
+    print("[UI] Skeleton ESP已"..(State.espSettings.SkeletonESP and "开启" or "关闭"))
+end, 6, TabContentFrames.esp)
+
+CreateButton("Chams", function()
+    State.espSettings.ChamsEnabled = not State.espSettings.ChamsEnabled
+    print("[UI] Chams已"..(State.espSettings.ChamsEnabled and "开启" or "关闭"))
+end, 7, TabContentFrames.esp)
+
+CreateButton("Snaplines", function()
+    State.espSettings.Snaplines = not State.espSettings.Snaplines
+    print("[UI] Snaplines已"..(State.espSettings.Snaplines and "开启" or "关闭"))
+end, 8, TabContentFrames.esp)
+
+CreateButton("团队检查", function()
+    State.espSettings.TeamCheck = not State.espSettings.TeamCheck
+    print("[UI] 团队检查已"..(State.espSettings.TeamCheck and "开启" or "关闭"))
+end, 9, TabContentFrames.esp)
+
+CreateButton("显示距离", function()
+    State.espSettings.ShowDistance = not State.espSettings.ShowDistance
+    print("[UI] 显示距离已"..(State.espSettings.ShowDistance and "开启" or "关闭"))
+end, 10, TabContentFrames.esp)
+
+CreateTextbox("最大距离", "输入数字（如1000）", function(value)
+    State.espSettings.MaxDistance = tonumber(value)
+    print("[UI] 最大距离已设置为：", State.espSettings.MaxDistance)
+end, 11, TabContentFrames.esp)
+
+-- ESP特别功能
+CreateButton("夜视", function()
+    ScriptState.nightVisionEnabled = not ScriptState.nightVisionEnabled
+    
+    if State.nightVisionConnection then
+        State.nightVisionConnection:Disconnect()
+        State.nightVisionConnection = nil
+    end
+    
+    if ScriptState.nightVisionEnabled then
+        print("[UI] 夜视已启用")
+        local lighting = game:GetService("Lighting")
+        lighting.Ambient = Color3.new(1, 1, 1)
+        
+        State.nightVisionConnection = RunService.Heartbeat:Connect(function()
+            if ScriptState.nightVisionEnabled then
+                lighting.Ambient = Color3.new(1, 1, 1)
+            end
+        end)
+    else
+        print("[UI] 夜视已禁用")
+        local lighting = game:GetService("Lighting")
+        lighting.Ambient = Color3.new(0, 0, 0)
+    end
+end, 12, TabContentFrames.esp)
+
+-- 监听玩家加入和离开，更新玩家列表
+Players.PlayerAdded:Connect(function(newPlayer)
+    updatePlayerDropdown()
+    print("[UI] 玩家加入：", newPlayer.Name)
+end)
+
+Players.PlayerRemoving:Connect(function(removedPlayer)
+    if State.customLockedPlayer == removedPlayer then
+        State.customLockedPlayer = nil
+        playerDropdownButton.Text = "无"
+        print("[UI] 锁定的玩家已离开：", removedPlayer.Name)
+    end
+    updatePlayerDropdown()
+    print("[UI] 玩家离开：", removedPlayer.Name)
+end)
 
 UIS.InputBegan:Connect(function(input, processed)
     if processed then return end
     if input.KeyCode == Config.UIToggleKey then
         MainFrame.Visible = not MainFrame.Visible
         print("[UI] 面板已"..(MainFrame.Visible and "显示" or "隐藏"))
+    elseif input.KeyCode == Enum.KeyCode.Z and State.isRunKeyEnabled then
+        -- 切换快速跑步
+        local isFastRunEnabled = State.runConnection ~= nil
+        if isFastRunEnabled then
+            -- 关闭快速跑步
+            print("[UI] 快速跑步已关闭")
+            if State.runConnection then
+                State.runConnection:Disconnect()
+                State.runConnection = nil
+            end
+        else
+            -- 开启快速跑步
+            print("[UI] 快速跑步已开启")
+            local lastTime = tick()
+            State.runConnection = RunService.Heartbeat:Connect(function()
+                local char = player.Character
+                if not char then return end
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if not humanoid or humanoid.Health <= 0 then return end
+                local moveDir = humanoid.MoveDirection
+                if moveDir.Magnitude > 0 then
+                    local currentTime = tick()
+                    local deltaTime = currentTime - lastTime
+                    lastTime = currentTime
+                    char:TranslateBy(moveDir * State.runSpeed * deltaTime)
+                else
+                    lastTime = tick()
+                end
+            end)
+        end
     end
 end)
+
+-- 初始化互动对象记录功能
+initInteractObjectRecorder()
