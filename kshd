@@ -178,6 +178,13 @@ local State = {
     teleportMode = "rotate", -- "behind", "rotate", "feet", "head"
     -- 快捷键参数
     isRunKeyEnabled = true,
+    -- 车辆飞行相关变量
+    flightEnabled = false,
+    flightSpeed = 1,
+    -- 车辆速度加速相关变量
+    velocityEnabled = true,
+    velocityMult = 0.025,
+    velocityEnabledKeyCode = Enum.KeyCode.W,
     -- ESP相关变量
     espEnabled = false,
     espDrawings = {},
@@ -1476,14 +1483,16 @@ local function CreateDropdown(labelText, options, defaultOption, callback, order
 
     local optionButtons = {}
 
-    local function updateDropdownList()
+    local function updateDropdownList(newOptions)
+        local currentOptions = newOptions or options
+        
         for _, button in ipairs(optionButtons) do
             button:Destroy()
         end
         optionButtons = {}
 
         local totalHeight = 0
-        for i, option in ipairs(options) do
+        for i, option in ipairs(currentOptions) do
             local optionButton = Instance.new("TextButton")
             optionButton.Size = UDim2.new(1, 0, 0, 32)
             optionButton.Position = UDim2.new(0, 0, 0, totalHeight)
@@ -1528,7 +1537,9 @@ local function CreateDropdown(labelText, options, defaultOption, callback, order
         dropdownList.Visible = not dropdownList.Visible
     end)
 
-    return container, dropdown, updateDropdownList
+    return container, dropdown, function(newOptions)
+        updateDropdownList(newOptions)
+    end
 end
 
 local function CreateToggle(labelText, defaultState, callback, order, parent)
@@ -1957,7 +1968,7 @@ local function toggleAutoAttack(enabled)
             local closestPlayer = nil
             local closestDistance = State.autoAttackRange
             
-            -- 如果有自定义锁定的玩家，优先使用
+            -- 如果有自定义锁定的玩家，只攻击该玩家
             if State.customLockedPlayer then
                 local targetCharacter = State.customLockedPlayer.Character
                 if targetCharacter then
@@ -1971,10 +1982,9 @@ local function toggleAutoAttack(enabled)
                         end
                     end
                 end
-            end
-            
-            -- 如果没有自定义锁定玩家或锁定玩家不在范围内，查找最近的玩家
-            if not closestPlayer then
+            else
+                -- 如果没有自定义锁定玩家，查找血量最低的玩家
+                local lowestHealth = math.huge
                 for _, otherPlayer in ipairs(Players:GetPlayers()) do
                     if otherPlayer == player then continue end
                     
@@ -1987,16 +1997,21 @@ local function toggleAutoAttack(enabled)
                     local targetRootPart = targetCharacter:FindFirstChild("HumanoidRootPart")
                     if not targetRootPart then continue end
                     
+                    -- 检查距离范围
+                    local distance = (char.HumanoidRootPart.Position - targetRootPart.Position).Magnitude
+                    if distance > State.autoAttackRange then continue end
+                    
                     -- 检查团队
                     if ScriptState.aimLockTeamCheck then
                         local onSameTeam = playersOnSameTeam(otherPlayer)
                         if onSameTeam then continue end
                     end
                     
-                    local distance = (char.HumanoidRootPart.Position - targetRootPart.Position).Magnitude
-                    if distance < closestDistance then
-                        closestDistance = distance
+                    -- 查找血量最低的玩家
+                    if targetHumanoid.Health < lowestHealth then
+                        lowestHealth = targetHumanoid.Health
                         closestPlayer = otherPlayer
+                        closestDistance = distance
                     end
                 end
             end
@@ -2071,6 +2086,142 @@ local function toggleAutoAttack(enabled)
     else
         print("[UI] 自动攻击已关闭")
     end
+end
+
+-- 获取车辆函数
+local function GetVehicleFromDescendant(Descendant)
+    local parent = Descendant.Parent
+    while parent and parent ~= workspace do
+        if parent.Name == player.Name .. "'s Car" then
+            return parent
+        end
+        if parent.Name == "Body" then
+            return parent.Parent
+        end
+        if parent.Name == "Misc" then
+            return parent.Parent
+        end
+        if parent:IsA("Model") then
+            return parent
+        end
+        parent = parent.Parent
+    end
+    return nil
+end
+
+-- 车辆飞行功能
+local flightConnection = nil
+
+local function toggleFlight(enabled)
+    State.flightEnabled = enabled
+    
+    if flightConnection then
+        flightConnection:Disconnect()
+        flightConnection = nil
+    end
+    
+    if State.flightEnabled then
+        print("[UI] 车辆飞行已开启")
+        
+        flightConnection = RunService.Heartbeat:Connect(function()
+            local char = player.Character
+            if not char then return end
+            
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if not humanoid or humanoid.Health <= 0 then return end
+            
+            local seatPart = humanoid.SeatPart
+            if seatPart and seatPart:IsA("VehicleSeat") then
+                local vehicle = GetVehicleFromDescendant(seatPart)
+                if vehicle and vehicle:IsA("Model") then
+                    if not vehicle.PrimaryPart then
+                        if seatPart.Parent == vehicle then
+                            vehicle.PrimaryPart = seatPart
+                        else
+                            vehicle.PrimaryPart = vehicle:FindFirstChildWhichIsA("BasePart")
+                        end
+                    end
+                    
+                    if vehicle.PrimaryPart then
+                        local primaryPartCFrame = vehicle:GetPrimaryPartCFrame()
+                        local moveVector = Vector3.new(
+                            (UIS:IsKeyDown(Enum.KeyCode.D) and State.flightSpeed) or (UIS:IsKeyDown(Enum.KeyCode.A) and -State.flightSpeed) or 0,
+                            (UIS:IsKeyDown(Enum.KeyCode.E) and State.flightSpeed / 2) or (UIS:IsKeyDown(Enum.KeyCode.Q) and -State.flightSpeed / 2) or 0,
+                            (UIS:IsKeyDown(Enum.KeyCode.S) and State.flightSpeed) or (UIS:IsKeyDown(Enum.KeyCode.W) and -State.flightSpeed) or 0
+                        )
+                        
+                        local targetCFrame = CFrame.new(primaryPartCFrame.Position + moveVector, primaryPartCFrame.Position + workspace.CurrentCamera.CFrame.LookVector)
+                        vehicle:SetPrimaryPartCFrame(targetCFrame)
+                        seatPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                        seatPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                    end
+                end
+            end
+        end)
+    else
+        print("[UI] 车辆飞行已关闭")
+    end
+end
+
+-- 车辆速度加速功能
+local velocityConnection = nil
+
+local function toggleVelocity(enabled)
+    State.velocityEnabled = enabled
+    
+    if velocityConnection then
+        velocityConnection:Disconnect()
+        velocityConnection = nil
+    end
+    
+    if State.velocityEnabled then
+        print("[UI] 车辆速度加速已开启")
+        
+        velocityConnection = RunService.Heartbeat:Connect(function()
+            if not State.velocityEnabled then return end
+            
+            if UIS:IsKeyDown(State.velocityEnabledKeyCode) then
+                local char = player.Character
+                if char then
+                    local humanoid = char:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        local seatPart = humanoid.SeatPart
+                        if seatPart and seatPart:IsA("VehicleSeat") then
+                            seatPart.AssemblyLinearVelocity = seatPart.AssemblyLinearVelocity * Vector3.new(1 + State.velocityMult, 1, 1 + State.velocityMult)
+                        end
+                    end
+                end
+            end
+        end)
+    else
+        print("[UI] 车辆速度加速已关闭")
+    end
+end
+
+-- 传送到天空功能
+local function teleportToSky()
+    local char = player.Character
+    if not char then 
+        print("[UI] 未找到角色")
+        return 
+    end
+    
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then 
+        print("[UI] 角色已死亡")
+        return 
+    end
+    
+    local rootPart = char:FindFirstChild("HumanoidRootPart")
+    if not rootPart then 
+        print("[UI] 未找到HumanoidRootPart")
+        return 
+    end
+    
+    local currentX, currentY, currentZ = rootPart.Position.X, rootPart.Position.Y, rootPart.Position.Z
+    local skyPosition = Vector3.new(currentX, 720, currentZ)
+    rootPart.CFrame = CFrame.new(skyPosition)
+    print("[UI] 已传送到天空720高度")
 end
 
 -- 攻击范围显示功能
@@ -2161,15 +2312,18 @@ CreateToggle("开启快速跑步", false, function(enabled)
     end
 end, 3, TabContentFrames.move)
 
+CreateToggle("开启人物旋转", false, toggleSpin, 4, TabContentFrames.move)
 CreateTextbox("设置旋转速度", "输入数字（如10）", function(speed)
     State.spinSpeed = tonumber(speed)
     print("[UI] 旋转速度已设置为：", State.spinSpeed)
-end, 4, TabContentFrames.move)
-
-CreateToggle("开启人物旋转", false, toggleSpin, 5, TabContentFrames.move)
+end, 5, TabContentFrames.move)
+CreateTextbox("旋转速度", "输入数字（如10）", function(value)
+    State.attackRotationSpeed = tonumber(value)
+    print("[UI] 旋转速度已设置为：", State.attackRotationSpeed)
+end, 6, TabContentFrames.move)
 
 -- 自动攻击功能
-CreateToggle("自动攻击", false, toggleAutoAttack, 6, TabContentFrames.move)
+CreateToggle("自动攻击", false, toggleAutoAttack, 7, TabContentFrames.move)
 CreateTextbox("攻击范围", "输入数字（如20）", function(range)
     State.autoAttackRange = tonumber(range)
     print("[UI] 攻击范围已设置为：", State.autoAttackRange)
@@ -2177,8 +2331,18 @@ CreateTextbox("攻击范围", "输入数字（如20）", function(range)
     if State.attackRangeIndicator then
         State.attackRangeIndicator.Size = Vector3.new(State.autoAttackRange * 2, State.autoAttackRange * 2, State.autoAttackRange * 2)
     end
-end, 7, TabContentFrames.move)
-CreateToggle("显示攻击范围", false, toggleAttackRangeVisible, 8, TabContentFrames.move)
+end, 8, TabContentFrames.move)
+CreateToggle("显示攻击范围", false, toggleAttackRangeVisible, 9, TabContentFrames.move)
+CreateButton("传送到天空", teleportToSky, 10, TabContentFrames.move)
+CreateToggle("车辆飞行", false, toggleFlight, 11, TabContentFrames.move)
+CreateToggle("车辆速度加速", false, toggleVelocity, 12, TabContentFrames.move)
+CreateTextbox("速度倍数", "输入数字（1-50）", function(value)
+    local num = tonumber(value)
+    if num then
+        State.velocityMult = num / 100
+        print("[UI] 速度倍数已设置为：", num)
+    end
+end, 13, TabContentFrames.move)
 
 -- 获取当前所有玩家列表
 local function getPlayerList()
@@ -2206,11 +2370,12 @@ local playerDropdown, playerDropdownButton, updatePlayerDropdown = CreateDropdow
             State.customLockedPlayer = nil
         end
     end
-end, 9, TabContentFrames.move)
+end, 13, TabContentFrames.move)
 
 -- 监听玩家加入和离开，更新玩家列表
 Players.PlayerAdded:Connect(function(newPlayer)
-    updatePlayerDropdown()
+    local playerList = getPlayerList()
+    updatePlayerDropdown(playerList)
     createESP(newPlayer)
     print("[UI] 玩家加入：", newPlayer.Name)
 end)
@@ -2222,24 +2387,19 @@ Players.PlayerRemoving:Connect(function(removedPlayer)
         print("[UI] 锁定的玩家已离开：", removedPlayer.Name)
     end
     removeESP(removedPlayer)
-    updatePlayerDropdown()
+    local playerList = getPlayerList()
+    updatePlayerDropdown(playerList)
     print("[UI] 玩家离开：", removedPlayer.Name)
 end)
 
 CreateButton("刷新玩家列表", function()
-    updatePlayerDropdown()
     local playerList = getPlayerList()
+    updatePlayerDropdown(playerList)
     print("[UI] 玩家列表已刷新")
     for _, playerName in ipairs(playerList) do
         print("[UI] -", playerName)
     end
-end, 9, TabContentFrames.move)
-
--- 旋转速度调节
-CreateTextbox("旋转速度", "输入数字（如10）", function(value)
-    State.attackRotationSpeed = tonumber(value)
-    print("[UI] 旋转速度已设置为：", State.attackRotationSpeed)
-end, 10, TabContentFrames.move)
+end, 14, TabContentFrames.move)
 
 -- 瞬移模式选择
 CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋转", "瞬移到脚下", "瞬移到头上"}, "以锁定玩家为中心旋转", function(value)
@@ -2253,7 +2413,7 @@ CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋�
         State.teleportMode = "head"
     end
     print("[UI] 瞬移模式已设置为：", value)
-end, 11, TabContentFrames.move)
+end, 15, TabContentFrames.move)
 
 -- 互动选项卡
 CreateTextbox("设置互动距离", "输入数字（10-5000）", function(distance)
@@ -2570,7 +2730,8 @@ end, 12, TabContentFrames.esp)
 
 -- 监听玩家加入和离开，更新玩家列表
 Players.PlayerAdded:Connect(function(newPlayer)
-    updatePlayerDropdown()
+    local playerList = getPlayerList()
+    updatePlayerDropdown(playerList)
     print("[UI] 玩家加入：", newPlayer.Name)
 end)
 
@@ -2580,7 +2741,8 @@ Players.PlayerRemoving:Connect(function(removedPlayer)
         playerDropdownButton.Text = "无"
         print("[UI] 锁定的玩家已离开：", removedPlayer.Name)
     end
-    updatePlayerDropdown()
+    local playerList = getPlayerList()
+    updatePlayerDropdown(playerList)
     print("[UI] 玩家离开：", removedPlayer.Name)
 end)
 
