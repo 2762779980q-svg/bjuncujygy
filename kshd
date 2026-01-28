@@ -178,6 +178,9 @@ local State = {
     teleportMode = "rotate", -- "behind", "rotate", "feet", "head"
     -- 快捷键参数
     isRunKeyEnabled = true,
+    -- 重力相关变量
+    gravityEnabled = false,
+    gravityMultiplier = 1,
     -- 车辆飞行相关变量
     flightEnabled = false,
     flightSpeed = 5,
@@ -2124,7 +2127,7 @@ local function toggleFlight(enabled)
     if State.flightEnabled then
         print("[UI] 车辆飞行已开启")
         
-        flightConnection = RunService.Stepped:Connect(function()
+        flightConnection = RunService.Heartbeat:Connect(function()
             local char = player.Character
             if not char then return end
             
@@ -2212,6 +2215,35 @@ local function toggleVelocity(enabled)
         end)
     else
         print("[UI] 车辆速度加速已关闭")
+    end
+end
+
+-- 重力调整功能
+local gravityConnection = nil
+
+local function toggleGravity(enabled)
+    State.gravityEnabled = enabled
+    
+    if gravityConnection then
+        gravityConnection:Disconnect()
+        gravityConnection = nil
+    end
+    
+    if State.gravityEnabled then
+        print("[UI] 重力调整已开启")
+        
+        gravityConnection = RunService.Heartbeat:Connect(function()
+            local char = player.Character
+            if not char then return end
+            
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if not humanoid or humanoid.Health <= 0 then return end
+            
+            workspace.Gravity = 196.2 * State.gravityMultiplier
+        end)
+    else
+        print("[UI] 重力调整已关闭")
+        workspace.Gravity = 196.2
     end
 end
 
@@ -2329,18 +2361,27 @@ CreateToggle("开启快速跑步", false, function(enabled)
     end
 end, 3, TabContentFrames.move)
 
-CreateToggle("开启人物旋转", false, toggleSpin, 4, TabContentFrames.move)
+CreateToggle("重力开关", false, toggleGravity, 4, TabContentFrames.move)
+CreateTextbox("重力倍数", "输入数字（如0.5）", function(value)
+    State.gravityMultiplier = tonumber(value) or 1
+    if State.gravityEnabled then
+        workspace.Gravity = 196.2 * State.gravityMultiplier
+    end
+    print("[UI] 重力倍数已设置为：", State.gravityMultiplier)
+end, 5, TabContentFrames.move)
+
+CreateToggle("开启人物旋转", false, toggleSpin, 6, TabContentFrames.move)
 CreateTextbox("设置旋转速度", "输入数字（如10）", function(speed)
     State.spinSpeed = tonumber(speed)
     print("[UI] 旋转速度已设置为：", State.spinSpeed)
-end, 5, TabContentFrames.move)
+end, 7, TabContentFrames.move)
 CreateTextbox("旋转速度", "输入数字（如10）", function(value)
     State.attackRotationSpeed = tonumber(value)
     print("[UI] 旋转速度已设置为：", State.attackRotationSpeed)
-end, 6, TabContentFrames.move)
+end, 8, TabContentFrames.move)
 
 -- 自动攻击功能
-CreateToggle("自动攻击", false, toggleAutoAttack, 7, TabContentFrames.move)
+CreateToggle("自动攻击", false, toggleAutoAttack, 9, TabContentFrames.move)
 CreateTextbox("攻击范围", "输入数字（如20）", function(range)
     State.autoAttackRange = tonumber(range)
     print("[UI] 攻击范围已设置为：", State.autoAttackRange)
@@ -2349,17 +2390,17 @@ CreateTextbox("攻击范围", "输入数字（如20）", function(range)
         State.attackRangeIndicator.Size = Vector3.new(State.autoAttackRange * 2, State.autoAttackRange * 2, State.autoAttackRange * 2)
     end
 end, 8, TabContentFrames.move)
-CreateToggle("显示攻击范围", false, toggleAttackRangeVisible, 9, TabContentFrames.move)
-CreateButton("传送到天空", teleportToSky, 10, TabContentFrames.move)
-CreateToggle("车辆飞行", false, toggleFlight, 11, TabContentFrames.move)
-CreateToggle("车辆速度加速", false, toggleVelocity, 12, TabContentFrames.move)
+CreateToggle("显示攻击范围", false, toggleAttackRangeVisible, 10, TabContentFrames.move)
+CreateButton("传送到天空", teleportToSky, 11, TabContentFrames.move)
+CreateToggle("车辆飞行", false, toggleFlight, 12, TabContentFrames.move)
+CreateToggle("车辆速度加速", false, toggleVelocity, 13, TabContentFrames.move)
 CreateTextbox("速度倍数", "输入数字（1-50）", function(value)
     local num = tonumber(value)
     if num then
         State.velocityMult = num / 100
         print("[UI] 速度倍数已设置为：", num)
     end
-end, 13, TabContentFrames.move)
+end, 14, TabContentFrames.move)
 
 -- 获取当前所有玩家列表
 local function getPlayerList()
@@ -2387,7 +2428,7 @@ local playerDropdown, playerDropdownButton, updatePlayerDropdown = CreateDropdow
             State.customLockedPlayer = nil
         end
     end
-end, 13, TabContentFrames.move)
+end, 15, TabContentFrames.move)
 
 -- 监听玩家加入和离开，更新玩家列表
 Players.PlayerAdded:Connect(function(newPlayer)
@@ -2416,7 +2457,7 @@ CreateButton("刷新玩家列表", function()
     for _, playerName in ipairs(playerList) do
         print("[UI] -", playerName)
     end
-end, 14, TabContentFrames.move)
+end, 16, TabContentFrames.move)
 
 -- 瞬移模式选择
 CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋转", "瞬移到脚下", "瞬移到头上"}, "以锁定玩家为中心旋转", function(value)
@@ -2430,7 +2471,7 @@ CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋�
         State.teleportMode = "head"
     end
     print("[UI] 瞬移模式已设置为：", value)
-end, 15, TabContentFrames.move)
+end, 17, TabContentFrames.move)
 
 -- 互动选项卡
 CreateTextbox("设置互动距离", "输入数字（10-5000）", function(distance)
