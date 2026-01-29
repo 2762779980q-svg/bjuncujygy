@@ -189,6 +189,9 @@ local State = {
     gravityEnabled = false,
     originalGravity = 196.2,
     customGravity = 196.2,
+    -- 自动防御相关变量
+    autoDefenseEnabled = false,
+    autoDefenseRange = 10,
     -- ESP相关变量
     espEnabled = false,
     espDrawings = {},
@@ -2219,6 +2222,69 @@ local function toggleVelocity(enabled)
     end
 end
 
+-- 自动防御功能
+local autoDefenseConnection = nil
+
+local function toggleAutoDefense(enabled)
+    State.autoDefenseEnabled = enabled
+    
+    if autoDefenseConnection then
+        autoDefenseConnection:Disconnect()
+        autoDefenseConnection = nil
+    end
+    
+    if State.autoDefenseEnabled then
+        print("[UI] 自动防御已开启")
+        
+        autoDefenseConnection = RunService.Heartbeat:Connect(function()
+            if not State.autoDefenseEnabled then return end
+            
+            local char = player.Character
+            if not char then return end
+            
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if not humanoid or humanoid.Health <= 0 then return end
+            
+            local rootPart = char:FindFirstChild("HumanoidRootPart")
+            if not rootPart then return end
+            
+            local hasEnemyNearby = false
+            for _, otherPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
+                if otherPlayer ~= player then
+                    local otherChar = otherPlayer.Character
+                    if otherChar then
+                        local otherRoot = otherChar:FindFirstChild("HumanoidRootPart")
+                        if otherRoot then
+                            local distance = (rootPart.Position - otherRoot.Position).Magnitude
+                            if distance <= State.autoDefenseRange then
+                                hasEnemyNearby = true
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+            
+            if hasEnemyNearby then
+                -- 模拟按F键
+                local success, err = pcall(function()
+                    -- 使用UserInputService模拟按F键
+                    local inputObject = Instance.new("InputObject")
+                    inputObject.KeyCode = Enum.KeyCode.F
+                    game:GetService("UserInputService"):InputBegan(inputObject, false)
+                    task.wait(0.1)
+                    game:GetService("UserInputService"):InputEnded(inputObject, false)
+                end)
+                if not success then
+                    print("[UI] 自动防御触发失败：", err)
+                end
+            end
+        end)
+    else
+        print("[UI] 自动防御已关闭")
+    end
+end
+
 -- 传送到天空功能
 local function teleportToSky()
     local char = player.Character
@@ -2364,6 +2430,14 @@ CreateTextbox("速度倍数", "输入数字（1-50）", function(value)
         print("[UI] 速度倍数已设置为：", num)
     end
 end, 13, TabContentFrames.move)
+CreateToggle("自动防御", false, toggleAutoDefense, 14, TabContentFrames.move)
+CreateTextbox("防御范围", "输入数字（如10）", function(range)
+    local num = tonumber(range)
+    if num then
+        State.autoDefenseRange = num
+        print("[UI] 防御范围已设置为：", num)
+    end
+end, 15, TabContentFrames.move)
 
 -- 获取当前所有玩家列表
 local function getPlayerList()
@@ -2420,7 +2494,7 @@ CreateButton("刷新玩家列表", function()
     for _, playerName in ipairs(playerList) do
         print("[UI] -", playerName)
     end
-end, 14, TabContentFrames.move)
+end, 16, TabContentFrames.move)
 
 -- 瞬移模式选择
 CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋转", "瞬移到脚下", "瞬移到头上"}, "以锁定玩家为中心旋转", function(value)
@@ -2434,7 +2508,7 @@ CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋�
         State.teleportMode = "head"
     end
     print("[UI] 瞬移模式已设置为：", value)
-end, 15, TabContentFrames.move)
+end, 17, TabContentFrames.move)
 
 -- 互动选项卡
 CreateTextbox("设置互动距离", "输入数字（10-5000）", function(distance)
