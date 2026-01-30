@@ -1,5 +1,6 @@
 -- 设备检测与初始化
 local UIS = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 if UIS.TouchEnabled and not UIS.MouseEnabled and not UIS.KeyboardEnabled then
     getgenv().bypass_adonis = true
     loadstring(game:HttpGet('https://raw.githubusercontent.com/FakeAngles/PasteWare-v2/refs/heads/main/PasteWareV2LegacyMobile.lua'))() return
@@ -171,8 +172,22 @@ local State = {
     inputConnection = nil,
     lastInteractedObject = nil,
     hitboxOriginalData = {},
+    -- 防甩飞相关变量
+    isAntiFlyEnabled = false,
+    antiFlyTrackedPlayers = {},
+    antiFlyConnection = nil,
+    -- 自瞄优化变量
+    aimFovEnabled = false,
+    aimFovRadius = 200,
+    aimFovIndicator = nil,
+    aimFovConnection = nil,
+    aimTargetSwitchEnabled = true,
+    aimAntiShakeEnabled = true,
+    aimLastTargetTime = 0,
+    aimSmoothVelocity = Vector3.new(0, 0, 0),
+    aimTargetNpcsEnabled = false,
     -- 旋转攻击参数
-    attackRotationSpeed = 10,
+    attackRotationSpeed = 1.2,
     attackRotationAngle = 0,
     -- 瞬移模式参数
     teleportMode = "rotate", -- "behind", "rotate", "feet", "head"
@@ -189,9 +204,6 @@ local State = {
     gravityEnabled = false,
     originalGravity = 196.2,
     customGravity = 196.2,
-    -- 自动防御相关变量
-    autoDefenseEnabled = false,
-    autoDefenseRange = 10,
     -- ESP相关变量
     espEnabled = false,
     espDrawings = {},
@@ -958,11 +970,17 @@ local function getClosestPlayer(config)
         originPosition = originPosition()
     end
     originPosition = originPosition or getMousePosition()
+    
+    local fovCheck = config.fovCheck
+    if fovCheck == nil then
+        fovCheck = State.aimFovEnabled or false
+    end
 
     local ClosestPart
     local ClosestPlayer
     local DistanceToMouse
 
+    -- 检查玩家
     for _, Player in next, Players:GetPlayers() do
         if Player == player then
             continue
@@ -1000,6 +1018,14 @@ local function getClosestPlayer(config)
         if not OnScreen then
             continue
         end
+        
+        if fovCheck then
+            local mousePos = getMousePosition()
+            local distanceFromCenter = (ScreenPosition - mousePos).Magnitude
+            if distanceFromCenter > State.aimFovRadius then
+                continue
+            end
+        end
 
         local Distance = (originPosition - ScreenPosition).Magnitude
         if Distance <= (DistanceToMouse or radiusOption) then
@@ -1015,6 +1041,47 @@ local function getClosestPlayer(config)
                 ClosestPart = candidatePart
                 ClosestPlayer = Player
                 DistanceToMouse = Distance
+            end
+        end
+    end
+    
+    -- 检查NPC
+    if State.aimTargetNpcsEnabled then
+        for _, model in ipairs(workspace:GetChildren()) do
+            if model:IsA("Model") and model ~= player.Character then
+                local humanoid = model:FindFirstChildOfClass("Humanoid")
+                if humanoid and humanoid.Health > 0 then
+                    local hrp = model:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local ScreenPosition, OnScreen = getPositionOnScreen(hrp.Position)
+                        if OnScreen then
+                            if fovCheck then
+                                local mousePos = getMousePosition()
+                                local distanceFromCenter = (ScreenPosition - mousePos).Magnitude
+                                if distanceFromCenter > State.aimFovRadius then
+                                    continue
+                                end
+                            end
+                            
+                            local Distance = (originPosition - ScreenPosition).Magnitude
+                            if Distance <= (DistanceToMouse or radiusOption) then
+                                local targetPartName
+                                if targetPartOption == "Random" then
+                                    targetPartName = ValidTargetParts[math.random(1, #ValidTargetParts)]
+                                else
+                                    targetPartName = targetPartOption
+                                end
+                                
+                                local candidatePart = model:FindFirstChild(targetPartName)
+                                if candidatePart then
+                                    ClosestPart = candidatePart
+                                    ClosestPlayer = model
+                                    DistanceToMouse = Distance
+                                end
+                            end
+                        end
+                    end
+                end
             end
         end
     end
@@ -1089,7 +1156,7 @@ local function toggleLockOnPlayer(forceState)
     end
 end
 
--- 自瞄锁定逻辑
+-- 自瞄锁定逻辑（优化版）
 RunService.RenderStepped:Connect(function()
     local state = getgenv().ScriptState
     
@@ -1098,33 +1165,115 @@ RunService.RenderStepped:Connect(function()
     end
 
     if state.lockEnabled and state.isLockedOn and state.targetPlayer and state.targetPlayer.Character then
-        if state.aimLockTeamCheck and state.targetPlayer.Team == player.Team then
+        -- 团队检查（仅对玩家有效）
+        if state.aimLockTeamCheck and state.targetPlayer:IsA("Player") and state.targetPlayer.Team == player.Team then
             state.isLockedOn = false
             state.targetPlayer = nil
             return
         end
 
+        -- 可见性检查
         if state.aimLockVisibleCheck and not IsPlayerVisible(state.targetPlayer) then
             state.isLockedOn = false
             state.targetPlayer = nil
             return
         end
 
-        local partName = getBodyPart(state.targetPlayer.Character, state.bodyPartSelected)
-        local part = state.targetPlayer.Character:FindFirstChild(partName)
+        local targetCharacter = state.targetPlayer:IsA("Player") and state.targetPlayer.Character or state.targetPlayer
+        
+        local partName = getBodyPart(targetCharacter, state.bodyPartSelected)
+        local part = targetCharacter:FindFirstChild(partName)
 
-        if part and state.targetPlayer.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
-            local predictedPosition = part.Position + (part.AssemblyLinearVelocity * state.predictionFactor)
-            local currentCameraPosition = camera.CFrame.Position
+        local humanoid = targetCharacter:FindFirstChildOfClass("Humanoid")
+        if part and humanoid and humanoid.Health > 0 then
+            local targetPosition = part.Position
+            local targetVelocity = part.AssemblyLinearVelocity
             
-            -- 原始自瞄逻辑
-            camera.CFrame = CFrame.new(currentCameraPosition, predictedPosition) * CFrame.new(0, 0, state.smoothingFactor)
+            local predictedPosition = targetPosition + (targetVelocity * state.predictionFactor)
+            
+            local currentCameraPosition = camera.CFrame.Position
+            local currentLookVector = camera.CFrame.LookVector
+            
+            local desiredLookVector = (predictedPosition - currentCameraPosition).Unit
+            
+            if state.aimAntiShakeEnabled then
+                local maxChange = 0.15
+                
+                local changeVector = desiredLookVector - currentLookVector
+                if changeVector.Magnitude > maxChange then
+                    changeVector = changeVector.Unit * maxChange
+                end
+                
+                desiredLookVector = currentLookVector + changeVector
+            end
+            
+            local newCFrame = CFrame.lookAt(currentCameraPosition, currentCameraPosition + desiredLookVector)
+            
+            camera.CFrame = newCFrame
+            
+            state.aimLastTargetTime = tick()
         else
             state.isLockedOn = false
             state.targetPlayer = nil
         end
     end
+    
+    if state.lockEnabled and state.isLockedOn and state.aimTargetSwitchEnabled then
+        local currentTime = tick()
+        if currentTime - state.aimLastTargetTime > 0.5 then
+            local _, newTarget = getClosestPlayer({
+                targetPart = state.bodyPartSelected,
+                visibleCheck = state.aimLockVisibleCheck,
+                aliveCheck = state.aimLockAliveCheck,
+                teamCheck = state.aimLockTeamCheck
+            })
+            
+            if newTarget and newTarget ~= state.targetPlayer then
+                state.isLockedOn = false
+                state.targetPlayer = nil
+                acquireLockTarget()
+            end
+        end
+    end
 end)
+
+-- FOV范围显示功能
+local function toggleAimFov(enabled)
+    State.aimFovEnabled = enabled
+    
+    if State.aimFovIndicator then
+        State.aimFovIndicator:Destroy()
+        State.aimFovIndicator = nil
+    end
+    
+    if State.aimFovConnection then
+        State.aimFovConnection:Disconnect()
+        State.aimFovConnection = nil
+    end
+    
+    if State.aimFovEnabled then
+        print("[UI] FOV范围显示已开启")
+        
+        local fovCircle = Drawing.new("Circle")
+        fovCircle.Thickness = 1
+        fovCircle.Color = Color3.fromRGB(255, 255, 255)
+        fovCircle.Filled = false
+        fovCircle.NumSides = 64
+        fovCircle.Radius = State.aimFovRadius
+        fovCircle.Visible = true
+        
+        State.aimFovIndicator = fovCircle
+        
+        State.aimFovConnection = RunService.RenderStepped:Connect(function()
+            if State.aimFovIndicator then
+                State.aimFovIndicator.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+                State.aimFovIndicator.Radius = State.aimFovRadius
+            end
+        end)
+    else
+        print("[UI] FOV范围显示已关闭")
+    end
+end
 
 -- Desync功能
 RunService.Heartbeat:Connect(function()
@@ -2222,69 +2371,6 @@ local function toggleVelocity(enabled)
     end
 end
 
--- 自动防御功能
-local autoDefenseConnection = nil
-
-local function toggleAutoDefense(enabled)
-    State.autoDefenseEnabled = enabled
-    
-    if autoDefenseConnection then
-        autoDefenseConnection:Disconnect()
-        autoDefenseConnection = nil
-    end
-    
-    if State.autoDefenseEnabled then
-        print("[UI] 自动防御已开启")
-        
-        autoDefenseConnection = RunService.Heartbeat:Connect(function()
-            if not State.autoDefenseEnabled then return end
-            
-            local char = player.Character
-            if not char then return end
-            
-            local humanoid = char:FindFirstChildOfClass("Humanoid")
-            if not humanoid or humanoid.Health <= 0 then return end
-            
-            local rootPart = char:FindFirstChild("HumanoidRootPart")
-            if not rootPart then return end
-            
-            local hasEnemyNearby = false
-            for _, otherPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
-                if otherPlayer ~= player then
-                    local otherChar = otherPlayer.Character
-                    if otherChar then
-                        local otherRoot = otherChar:FindFirstChild("HumanoidRootPart")
-                        if otherRoot then
-                            local distance = (rootPart.Position - otherRoot.Position).Magnitude
-                            if distance <= State.autoDefenseRange then
-                                hasEnemyNearby = true
-                                break
-                            end
-                        end
-                    end
-                end
-            end
-            
-            if hasEnemyNearby then
-                -- 模拟按F键
-                local success, err = pcall(function()
-                    -- 使用UserInputService模拟按F键
-                    local inputObject = Instance.new("InputObject")
-                    inputObject.KeyCode = Enum.KeyCode.F
-                    game:GetService("UserInputService"):InputBegan(inputObject, false)
-                    task.wait(0.1)
-                    game:GetService("UserInputService"):InputEnded(inputObject, false)
-                end)
-                if not success then
-                    print("[UI] 自动防御触发失败：", err)
-                end
-            end
-        end)
-    else
-        print("[UI] 自动防御已关闭")
-    end
-end
-
 -- 传送到天空功能
 local function teleportToSky()
     local char = player.Character
@@ -2309,6 +2395,63 @@ local function teleportToSky()
     local skyPosition = Vector3.new(currentX, 720, currentZ)
     rootPart.CFrame = CFrame.new(skyPosition)
     print("[UI] 已传送到天空720高度")
+end
+
+-- 防甩飞功能
+local function disableCanCollide(part)
+    if part:IsA("BasePart") and part.CanCollide then
+        part.CanCollide = false
+    end
+end
+
+local function trackAntiFlyCharacter(character)
+    for _, part in pairs(character:GetChildren()) do
+        disableCanCollide(part)
+    end
+    character.ChildAdded:Connect(function(child)
+        disableCanCollide(child)
+    end)
+end
+
+local function trackAntiFlyPlayer(targetPlayer)
+    if targetPlayer == player then return end
+    if targetPlayer.Character then
+        trackAntiFlyCharacter(targetPlayer.Character)
+    end
+    targetPlayer.CharacterAdded:Connect(trackAntiFlyCharacter)
+    State.antiFlyTrackedPlayers[targetPlayer] = true
+end
+
+local function toggleAntiFly(enabled)
+    State.isAntiFlyEnabled = enabled
+    
+    if State.antiFlyConnection then
+        State.antiFlyConnection:Disconnect()
+        State.antiFlyConnection = nil
+    end
+    
+    State.antiFlyTrackedPlayers = {}
+    
+    if State.isAntiFlyEnabled then
+        print("[UI] 防甩飞已启用")
+        
+        for _, targetPlayer in ipairs(Players:GetPlayers()) do
+            trackAntiFlyPlayer(targetPlayer)
+        end
+        
+        State.antiFlyConnection = RunService.RenderStepped:Connect(function()
+            for targetPlayer, _ in pairs(State.antiFlyTrackedPlayers) do
+                local character = targetPlayer.Character
+                if character then
+                    for _, part in pairs(character:GetChildren()) do
+                        disableCanCollide(part)
+                    end
+                end
+            end
+        end)
+    else
+        print("[UI] 防甩飞已禁用")
+    end
 end
 
 -- 攻击范围显示功能
@@ -2404,13 +2547,9 @@ CreateTextbox("设置旋转速度", "输入数字（如10）", function(speed)
     State.spinSpeed = tonumber(speed)
     print("[UI] 旋转速度已设置为：", State.spinSpeed)
 end, 5, TabContentFrames.move)
-CreateTextbox("旋转速度", "输入数字（如10）", function(value)
-    State.attackRotationSpeed = tonumber(value)
-    print("[UI] 旋转速度已设置为：", State.attackRotationSpeed)
-end, 6, TabContentFrames.move)
 
 -- 自动攻击功能
-CreateToggle("自动攻击", false, toggleAutoAttack, 7, TabContentFrames.move)
+CreateToggle("自动攻击", false, toggleAutoAttack, 6, TabContentFrames.move)
 CreateTextbox("攻击范围", "输入数字（如20）", function(range)
     State.autoAttackRange = tonumber(range)
     print("[UI] 攻击范围已设置为：", State.autoAttackRange)
@@ -2418,26 +2557,18 @@ CreateTextbox("攻击范围", "输入数字（如20）", function(range)
     if State.attackRangeIndicator then
         State.attackRangeIndicator.Size = Vector3.new(State.autoAttackRange * 2, State.autoAttackRange * 2, State.autoAttackRange * 2)
     end
-end, 8, TabContentFrames.move)
-CreateToggle("显示攻击范围", false, toggleAttackRangeVisible, 9, TabContentFrames.move)
-CreateButton("传送到天空", teleportToSky, 10, TabContentFrames.move)
-CreateToggle("车辆飞行", false, toggleFlight, 11, TabContentFrames.move)
-CreateToggle("车辆速度加速", false, toggleVelocity, 12, TabContentFrames.move)
+end, 7, TabContentFrames.move)
+CreateToggle("显示攻击范围", false, toggleAttackRangeVisible, 8, TabContentFrames.move)
+CreateButton("传送到天空", teleportToSky, 9, TabContentFrames.move)
+CreateToggle("车辆飞行", false, toggleFlight, 10, TabContentFrames.move)
+CreateToggle("车辆速度加速", false, toggleVelocity, 11, TabContentFrames.move)
 CreateTextbox("速度倍数", "输入数字（1-50）", function(value)
     local num = tonumber(value)
     if num then
         State.velocityMult = num / 100
         print("[UI] 速度倍数已设置为：", num)
     end
-end, 13, TabContentFrames.move)
-CreateToggle("自动防御", false, toggleAutoDefense, 14, TabContentFrames.move)
-CreateTextbox("防御范围", "输入数字（如10）", function(range)
-    local num = tonumber(range)
-    if num then
-        State.autoDefenseRange = num
-        print("[UI] 防御范围已设置为：", num)
-    end
-end, 15, TabContentFrames.move)
+end, 12, TabContentFrames.move)
 
 -- 获取当前所有玩家列表
 local function getPlayerList()
@@ -2494,7 +2625,7 @@ CreateButton("刷新玩家列表", function()
     for _, playerName in ipairs(playerList) do
         print("[UI] -", playerName)
     end
-end, 16, TabContentFrames.move)
+end, 14, TabContentFrames.move)
 
 -- 瞬移模式选择
 CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋转", "瞬移到脚下", "瞬移到头上"}, "以锁定玩家为中心旋转", function(value)
@@ -2508,7 +2639,7 @@ CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋�
         State.teleportMode = "head"
     end
     print("[UI] 瞬移模式已设置为：", value)
-end, 17, TabContentFrames.move)
+end, 15, TabContentFrames.move)
 
 -- 互动选项卡
 CreateTextbox("设置互动距离", "输入数字（10-5000）", function(distance)
@@ -2726,6 +2857,7 @@ CreateButton("加入单人服务器", function()
         print("[UI] 获取服务器列表失败：", err)
     end)
 end, 6, TabContentFrames.system)
+CreateToggle("防甩飞", false, toggleAntiFly, 7, TabContentFrames.system)
 
 -- 瞄准选项卡
 CreateToggle("自瞄锁定", false, function(enabled)
@@ -2762,6 +2894,23 @@ CreateTextbox("预测因子", "输入数字（如0.0）", function(value)
     ScriptState.predictionFactor = tonumber(value)
     print("[UI] 预测因子已设置为：", ScriptState.predictionFactor)
 end, 7, TabContentFrames.aim)
+CreateToggle("FOV范围显示", false, toggleAimFov, 8, TabContentFrames.aim)
+CreateTextbox("FOV半径", "输入数字（如200）", function(value)
+    State.aimFovRadius = tonumber(value)
+    print("[UI] FOV半径已设置为：", State.aimFovRadius)
+end, 9, TabContentFrames.aim)
+CreateToggle("目标切换", true, function(enabled)
+    ScriptState.aimTargetSwitchEnabled = enabled
+    print("[UI] 目标切换已"..(enabled and "启用" or "禁用"))
+end, 10, TabContentFrames.aim)
+CreateToggle("防抖", true, function(enabled)
+    ScriptState.aimAntiShakeEnabled = enabled
+    print("[UI] 防抖已"..(enabled and "启用" or "禁用"))
+end, 11, TabContentFrames.aim)
+CreateToggle("瞄准NPC", false, function(enabled)
+    State.aimTargetNpcsEnabled = enabled
+    print("[UI] 瞄准NPC已"..(enabled and "启用" or "禁用"))
+end, 12, TabContentFrames.aim)
 
 -- ESP选项卡
 CreateButton("开启ESP", function()
