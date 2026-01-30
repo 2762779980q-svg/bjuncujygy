@@ -2829,7 +2829,11 @@ CreateButton("加入单人服务器", function()
     print("[UI] 正在查找人最少的服务器...")
     local placeId = game.PlaceId
     
-    TeleportService:GetInstances(placeId):andThen(function(serverInstances)
+    print("[UI] 当前游戏ID：", placeId)
+    
+    TeleportService:GetGameInstancesAsync(placeId):andThen(function(result)
+        local serverInstances = result and result.GameInstances or {}
+        print("[UI] 获取到服务器列表，数量：", #serverInstances)
         if not serverInstances or #serverInstances == 0 then
             print("[UI] 未找到服务器实例")
             return
@@ -2838,18 +2842,21 @@ CreateButton("加入单人服务器", function()
         local bestServer = nil
         local minPlayers = math.huge
         
-        for _, serverInstance in ipairs(serverInstances) do
-            if serverInstance.PlayerCount < minPlayers then
-                minPlayers = serverInstance.PlayerCount
+        for i, serverInstance in ipairs(serverInstances) do
+            print("[UI] 服务器"..i.."：玩家数="..(serverInstance.Players or 0).."，ID="..(serverInstance.PlaceInstanceId or "未知"))
+            if serverInstance.Players and serverInstance.Players < minPlayers then
+                minPlayers = serverInstance.Players
                 bestServer = serverInstance
             end
         end
         
-        if bestServer then
-            print("[UI] 找到人最少的服务器，玩家数：", minPlayers)
+        if bestServer and bestServer.PlaceInstanceId then
+            print("[UI] 找到人最少的服务器，玩家数：", minPlayers, "，服务器ID：", bestServer.PlaceInstanceId)
             local teleportOptions = Instance.new("TeleportOptions")
             teleportOptions.ShouldReserveServer = false
-            TeleportService:TeleportToPlaceInstance(placeId, bestServer, player, teleportOptions)
+            
+            print("[UI] 准备传送到服务器：", bestServer.PlaceInstanceId)
+            TeleportService:TeleportToPlaceInstance(placeId, bestServer.PlaceInstanceId, player, teleportOptions)
         else
             print("[UI] 未找到合适的服务器")
         end
@@ -2858,6 +2865,13 @@ CreateButton("加入单人服务器", function()
     end)
 end, 6, TabContentFrames.system)
 CreateToggle("防甩飞", false, toggleAntiFly, 7, TabContentFrames.system)
+CreateButton("免费私人服务器", function()
+    print("[UI] 正在加载免费私人服务器脚本...")
+    pcall(function()
+        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-FREE-PRIVATE-SERVER-V2-59627"))()
+        print("[UI] 免费私人服务器脚本加载成功")
+    end)
+end, 8, TabContentFrames.system)
 
 -- 瞄准选项卡
 CreateToggle("自瞄锁定", false, function(enabled)
