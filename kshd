@@ -134,6 +134,36 @@ local SoundService = game:GetService("SoundService")
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
+-- 工具函数
+local function fireproximityprompt(prompt, holdTime)
+    if not prompt then return end
+    if typeof(prompt) ~= "Instance" or not prompt:IsA("ProximityPrompt") then return end
+    
+    holdTime = holdTime or 0
+    
+    -- 尝试直接触发ProximityPrompt
+    if prompt.Enabled then
+        local args = {
+            [1] = prompt
+        }
+        
+        -- 尝试使用VirtualInputManager
+        local VirtualInputManager = game:GetService("VirtualInputManager")
+        if VirtualInputManager then
+            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+            wait(holdTime)
+            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+        end
+        
+        -- 同时尝试直接调用Prompt的触发方法
+        pcall(function()
+            prompt:InputHoldBegin()
+            wait(holdTime)
+            prompt:InputHoldEnd()
+        end)
+    end
+end
+
 -- 配置表
 local Config = {
     DefaultRunSpeed = 20,
@@ -186,6 +216,16 @@ local State = {
     aimLastTargetTime = 0,
     aimSmoothVelocity = Vector3.new(0, 0, 0),
     aimTargetNpcsEnabled = false,
+    -- 自动传送物品相关变量
+    isAutoTeleportItemsEnabled = false,
+    autoTeleportItemsRange = 10,
+    autoTeleportItemsDelay = 0.5,
+    autoTeleportItemsConnection = nil,
+    -- 自动互动相关变量
+    isAutoInteractEnabled = false,
+    autoInteractRange = 10,
+    autoInteractDelay = 0.5,
+    autoInteractConnection = nil,
     -- 旋转攻击参数
     attackRotationSpeed = 1.2,
     attackRotationAngle = 0,
@@ -1236,6 +1276,142 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
+-- 自动传送物品功能
+local lastTeleportTime = 0
+
+local function toggleAutoTeleportItems(enabled)
+    State.isAutoTeleportItemsEnabled = enabled
+    
+    if State.autoTeleportItemsConnection then
+        State.autoTeleportItemsConnection:Disconnect()
+        State.autoTeleportItemsConnection = nil
+    end
+    
+    if State.isAutoTeleportItemsEnabled then
+        print("[UI] 自动传送物品已启用")
+        print("[UI] 传送范围：", State.autoTeleportItemsRange)
+        print("[UI] 传送延迟：", State.autoTeleportItemsDelay)
+        
+        lastTeleportTime = tick()
+        
+        State.autoTeleportItemsConnection = RunService.Heartbeat:Connect(function()
+            if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+                return
+            end
+            
+            local currentTime = tick()
+            if currentTime - lastTeleportTime < State.autoTeleportItemsDelay then
+                return
+            end
+            
+            local character = player.Character
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            
+            local closestPrompt = nil
+            local closestDistance = State.autoTeleportItemsRange
+            local closestPart = nil
+            local promptCount = 0
+            
+            print("[UI] 开始搜索可互动物品...")
+            
+            for _, prompt in ipairs(workspace:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") then
+                    promptCount = promptCount + 1
+                    local part = prompt.Parent
+                    if part and part:IsA("BasePart") then
+                        local distance = (part.Position - rootPart.Position).Magnitude
+                        print("[UI] 找到可互动物品：", part.Name, "，距离：", distance)
+                        if distance < closestDistance then
+                            closestDistance = distance
+                            closestPrompt = prompt
+                            closestPart = part
+                            print("[UI] 更新最近物品：", part.Name, "，距离：", distance)
+                        end
+                    end
+                end
+            end
+            
+            print("[UI] 共找到", promptCount, "个可互动物品")
+            
+            if closestPart then
+                print("[UI] 准备传送到：", closestPart.Name, "，位置：", closestPart.Position)
+                rootPart.Position = closestPart.Position + Vector3.new(0, 2, 0)
+                lastTeleportTime = currentTime
+                print("[UI] 已传送到可互动物品位置")
+            else
+                print("[UI] 范围内没有可互动物品")
+            end
+        end)
+    else
+        print("[UI] 自动传送物品已禁用")
+    end
+end
+
+-- 自动互动功能
+local lastInteractTime = 0
+
+local function toggleAutoInteract(enabled)
+    State.isAutoInteractEnabled = enabled
+    
+    if State.autoInteractConnection then
+        State.autoInteractConnection:Disconnect()
+        State.autoInteractConnection = nil
+    end
+    
+    if State.isAutoInteractEnabled then
+        print("[UI] 自动互动已启用")
+        print("[UI] 互动范围：", State.autoInteractRange)
+        print("[UI] 互动延迟：", State.autoInteractDelay)
+        
+        lastInteractTime = tick()
+        
+        State.autoInteractConnection = RunService.Heartbeat:Connect(function()
+            if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+                return
+            end
+            
+            local currentTime = tick()
+            if currentTime - lastInteractTime < State.autoInteractDelay then
+                return
+            end
+            
+            local character = player.Character
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            
+            local closestPrompt = nil
+            local closestDistance = State.autoInteractRange
+            local promptCount = 0
+            
+            print("[UI] 开始搜索可互动物品...")
+            
+            for _, prompt in ipairs(workspace:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") then
+                    promptCount = promptCount + 1
+                    local distance = (prompt.Parent.Position - rootPart.Position).Magnitude
+                    print("[UI] 找到可互动物品：", prompt.Parent.Name, "，距离：", distance)
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestPrompt = prompt
+                        print("[UI] 更新最近物品：", prompt.Parent.Name, "，距离：", distance)
+                    end
+                end
+            end
+            
+            print("[UI] 共找到", promptCount, "个可互动物品")
+            
+            if closestPrompt then
+                print("[UI] 自动触发互动：", closestPrompt.Parent.Name)
+                fireproximityprompt(closestPrompt)
+                lastInteractTime = currentTime
+            else
+                print("[UI] 范围内没有可互动物品")
+            end
+        end)
+    else
+        print("[UI] 自动互动已禁用")
+    end
+end
 
 -- FOV范围显示功能
 local function toggleAimFov(enabled)
@@ -2655,6 +2831,15 @@ CreateButton("还原所有互动距离", function()
 end, 3, TabContentFrames.interact)
 CreateButton("开启快速互动", function() setFastInteract(true) end, 4, TabContentFrames.interact)
 CreateButton("关闭快速互动", function() setFastInteract(false) end, 5, TabContentFrames.interact)
+CreateToggle("自动互动", false, toggleAutoInteract, 6, TabContentFrames.interact)
+CreateTextbox("互动范围", "输入数字（如10）", function(value)
+    State.autoInteractRange = tonumber(value)
+    print("[UI] 互动范围已设置为：", State.autoInteractRange)
+end, 7, TabContentFrames.interact)
+CreateTextbox("互动延迟", "输入数字（如0.5）", function(value)
+    State.autoInteractDelay = tonumber(value)
+    print("[UI] 互动延迟已设置为：", State.autoInteractDelay)
+end, 8, TabContentFrames.interact)
 
 -- 碰撞选项卡
 CreateToggle("穿墙", false, toggleNoClip, 1, TabContentFrames.collision)
@@ -2872,6 +3057,15 @@ CreateButton("免费私人服务器", function()
         print("[UI] 免费私人服务器脚本加载成功")
     end)
 end, 8, TabContentFrames.system)
+CreateToggle("自动传送物品", false, toggleAutoTeleportItems, 9, TabContentFrames.system)
+CreateTextbox("传送范围", "输入数字（如10）", function(value)
+    State.autoTeleportItemsRange = tonumber(value)
+    print("[UI] 传送范围已设置为：", State.autoTeleportItemsRange)
+end, 10, TabContentFrames.system)
+CreateTextbox("传送延迟", "输入数字（如0.5）", function(value)
+    State.autoTeleportItemsDelay = tonumber(value)
+    print("[UI] 传送延迟已设置为：", State.autoTeleportItemsDelay)
+end, 11, TabContentFrames.system)
 
 -- 瞄准选项卡
 CreateToggle("自瞄锁定", false, function(enabled)
