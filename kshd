@@ -295,7 +295,12 @@ local State = {
         Selected = Color3.fromRGB(255, 210, 0),
         Health = Color3.fromRGB(0, 255, 0),
         Distance = Color3.fromRGB(200, 200, 200)
-    }
+    },
+    -- 飞行相关变量
+    flyEnabled = false,
+    flySpeed = 50,
+    flyConnection = nil,
+    flyKeyCode = Enum.KeyCode.Space
 }
 
 -- 相机引用
@@ -2270,6 +2275,77 @@ local function toggleSpin(enabled)
     end
 end
 
+-- 人物飞行功能
+local function toggleFly(enabled)
+    State.flyEnabled = enabled
+    
+    if State.flyConnection then
+        State.flyConnection:Disconnect()
+        State.flyConnection = nil
+    end
+    
+    if State.flyEnabled then
+        print("[UI] 人物飞行已开启")
+        State.flyConnection = RunService.Heartbeat:Connect(function()
+            local char = player.Character
+            if not char then return end
+            
+            local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+            if not humanoidRootPart then return end
+            
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if not humanoid then return end
+            
+            -- 禁用重力
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+            
+            -- 计算移动方向
+            local moveDirection = Vector3.new()
+            
+            if UIS:IsKeyDown(Enum.KeyCode.W) then
+                moveDirection = moveDirection + camera.CFrame.LookVector
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then
+                moveDirection = moveDirection - camera.CFrame.LookVector
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then
+                moveDirection = moveDirection - camera.CFrame.RightVector
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then
+                moveDirection = moveDirection + camera.CFrame.RightVector
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.E) then
+                moveDirection = moveDirection + Vector3.new(0, 1, 0)
+            end
+            if UIS:IsKeyDown(Enum.KeyCode.Q) then
+                moveDirection = moveDirection - Vector3.new(0, 1, 0)
+            end
+            
+            -- 归一化方向向量
+            if moveDirection.Magnitude > 0 then
+                moveDirection = moveDirection.Unit
+            end
+            
+            -- 应用移动
+            local speed = State.flySpeed
+            humanoidRootPart.Velocity = moveDirection * speed
+        end)
+    else
+        print("[UI] 人物飞行已关闭")
+        
+        -- 恢复重力
+        local char = player.Character
+        if char then
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+                humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+            end
+        end
+    end
+end
+
 -- 自动攻击功能
 local function toggleAutoAttack(enabled)
     State.isAutoAttackEnabled = enabled
@@ -2817,6 +2893,16 @@ CreateDropdown("瞬移模式", {"瞬移到身后", "以锁定玩家为中心旋�
     print("[UI] 瞬移模式已设置为：", value)
 end, 15, TabContentFrames.move)
 
+-- 飞行功能
+CreateToggle("人物飞行", false, toggleFly, 16, TabContentFrames.move)
+CreateTextbox("飞行速度", "输入数字（10-200）", function(speed)
+    local num = tonumber(speed)
+    if num then
+        State.flySpeed = math.clamp(num, 10, 200)
+        print("[UI] 飞行速度已设置为：", State.flySpeed)
+    end
+end, 17, TabContentFrames.move)
+
 -- 互动选项卡
 CreateTextbox("设置互动距离", "输入数字（10-5000）", function(distance)
     -- 限制距离范围在10-5000之间
@@ -2912,6 +2998,12 @@ CreateButton("摧毁面板", function()
         if State.spinConnection then
             State.spinConnection:Disconnect()
             State.spinConnection = nil
+        end
+        
+        -- 关闭人物飞行功能
+        if State.flyConnection then
+            State.flyConnection:Disconnect()
+            State.flyConnection = nil
         end
         
         -- 关闭自动攻击功能
@@ -3255,6 +3347,10 @@ UIS.InputBegan:Connect(function(input, processed)
                 end
             end)
         end
+    elseif input.KeyCode == Enum.KeyCode.X then
+        -- 切换人物飞行
+        local isFlyEnabled = State.flyEnabled
+        toggleFly(not isFlyEnabled)
     end
 end)
 
