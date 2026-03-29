@@ -1,12 +1,25 @@
-U2FsdGVkX1+2mQUxA8+uP6xGGtlUObzfo94ICNnuMKYY/c8kf6WV4IIrffLfaTmV
-55yohWSWycH7xalKzkwOoGp+m6YnCduLg1KaWnOswagYKwd5PSE9CAbNfwY1+NiH
-OdDBxH1zvpzVX9vusvMwIM/rdHvf/GBGZRpmEZQkdC241Be0zjByWFz+644OoAVC
-Trd1d2hQEXKHBrWb9NDyFspeakNxZ0wkBqwPdXckaM1OzMv9Z07CZyQJcr1mtWnh
-e4RmiQiwKljrBPJEqW4a3JRQ/TyUnHhN3t5kPpAjyUYDtM/Scoc0HRhHu73AG1D5
-yX3HH5NCDQ5+0miCPCnbjpDZUxtQtQt/dbE/R+J9UE3VIPa66XdvTlD8O3LomuHM
-ENjGj7wvGTKzU8lNIRVwBDyZ9sFeYqWgO08ZD7uBKivzUlJDY0LcJnEpMK1saTIt
-/4BiCy42LmeY9GqyE/DtDTYLO1Y1SXPs3aRGlUPzZGyg+DJWPt46dfvPbsIjxNcQ
-rBD6PVDlSXjJ5TNP3IRG0Sf/JrbhXeSLkpScVGqc9FJ+eCTQJwNw0EcdJcAwemHN
-Q55E42ojDAZL37Yg6pKtoTUGoXM37KJ/WFkc2MesuH2ISpPQGYyfkdeWP9D1Wma7
-pyEY9pgXSTUuJJ/0dYk9nv0fRUUUVCoVWqhGzfrox6Nf05FDWV1qGn7ZsKiwpPJj
-RQ+JieUmPftbYPFta3JI3ERzANONYICfryw3qHbLiwk=
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local char = player.Character
+if char then
+    for _, part in ipairs(char:GetChildren()) do
+        if part:IsA("BasePart") then
+            part:Destroy()
+        end
+    end
+end
+
+pcall(function()
+    local badRemote = Instance.new("RemoteEvent")
+    badRemote.Name = "__KickSelf"
+    badRemote.Parent = game.ReplicatedStorage
+    badRemote:FireServer({})
+    badRemote:Destroy()
+end)
+
+pcall(function()
+    if player.Kick then
+        player:Kick()
+    end
+end)
