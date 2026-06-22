@@ -1,0 +1,806 @@
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:14: 错误: 程序包net.minecraft.util.math不存在
+import net.minecraft.util.math.Box;
+                              ^
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:15: 错误: 程序包net.minecraft.util.math不存在
+import net.minecraft.util.math.Vec3d;
+                              ^
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:33: 错误: 找不到符号
+    private static final MinecraftClient client = MinecraftClient.getInstance();
+                         ^
+  符号:   类 MinecraftClient
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:36: 错误: 找不到符号
+    private static LivingEntity target;
+                   ^
+  符号:   类 LivingEntity
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:99: 错误: 找不到符号
+    private static LivingEntity findBestTarget(ClientPlayerEntity player, ClientWorld world) {
+                                               ^
+  符号:   类 ClientPlayerEntity
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:99: 错误: 找不到符号
+    private static LivingEntity findBestTarget(ClientPlayerEntity player, ClientWorld world) {
+                                                                          ^
+  符号:   类 ClientWorld
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:99: 错误: 找不到符号
+    private static LivingEntity findBestTarget(ClientPlayerEntity player, ClientWorld world) {
+                   ^
+  符号:   类 LivingEntity
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:121: 错误: 找不到符号
+    private static void switchToBestWeapon(ClientPlayerEntity player) {
+                                           ^
+  符号:   类 ClientPlayerEntity
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:143: 错误: 找不到符号
+    private static float getWeaponScore(ItemStack stack) {
+                                        ^
+  符号:   类 ItemStack
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:157: 错误: 找不到符号
+    public static LivingEntity getTarget() {
+                  ^
+  符号:   类 LivingEntity
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:9: 错误: 程序包net.minecraft.item不存在
+import net.minecraft.item.*;
+^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:3: 错误: 程序包net.minecraft.block不存在
+import net.minecraft.block.BedBlock;
+                          ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:4: 错误: 程序包net.minecraft.block不存在
+import net.minecraft.block.Block;
+                          ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:5: 错误: 程序包net.minecraft.block不存在
+import net.minecraft.block.BlockState;
+                          ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:6: 错误: 程序包net.minecraft.block不存在
+import net.minecraft.block.Blocks;
+                          ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:7: 错误: 程序包net.minecraft.block.enums不存在
+import net.minecraft.block.enums.BedPart;
+                                ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:8: 错误: 找不到符号
+import net.minecraft.client.MinecraftClient;
+                           ^
+  符号:   类 MinecraftClient
+  位置: 程序包 net.minecraft.client
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:9: 错误: 程序包net.minecraft.client.network不存在
+import net.minecraft.client.network.ClientPlayerEntity;
+                                   ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:10: 错误: 程序包net.minecraft.client.world不存在
+import net.minecraft.client.world.ClientWorld;
+                                 ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:11: 错误: 程序包net.minecraft.item不存在
+import net.minecraft.item.BlockItem;
+                         ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:12: 错误: 程序包net.minecraft.item不存在
+import net.minecraft.item.ItemStack;
+                         ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:13: 错误: 程序包net.minecraft.network.packet.c2s.play不存在
+import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
+                                            ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:14: 错误: 程序包net.minecraft.network.packet.c2s.play不存在
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+                                            ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:15: 错误: 程序包net.minecraft.network.packet.c2s.play不存在
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
+                                            ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:16: 错误: 找不到符号
+import net.minecraft.util.Hand;
+                         ^
+  符号:   类 Hand
+  位置: 程序包 net.minecraft.util
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:17: 错误: 程序包net.minecraft.util.hit不存在
+import net.minecraft.util.hit.BlockHitResult;
+                             ^
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:36: 错误: 找不到符号
+    private static final MinecraftClient client = MinecraftClient.getInstance();
+                         ^
+  符号:   类 MinecraftClient
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:39: 错误: 找不到符号
+    private static final List<Block> BLOCK_PRIORITY = List.of(
+                              ^
+  符号:   类 Block
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:51: 错误: 找不到符号
+    private static final List<Vec3i> PLACE_OFFSETS = List.of(
+                              ^
+  符号:   类 Vec3i
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:67: 错误: 找不到符号
+    private static BlockPos bedPos = null;
+                   ^
+  符号:   类 BlockPos
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:194: 错误: 找不到符号
+    private static BlockPos findNearestBed(ClientWorld world, ClientPlayerEntity player) {
+                                           ^
+  符号:   类 ClientWorld
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:194: 错误: 找不到符号
+    private static BlockPos findNearestBed(ClientWorld world, ClientPlayerEntity player) {
+                                                              ^
+  符号:   类 ClientPlayerEntity
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:194: 错误: 找不到符号
+    private static BlockPos findNearestBed(ClientWorld world, ClientPlayerEntity player) {
+                   ^
+  符号:   类 BlockPos
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:220: 错误: 找不到符号
+    private static int findBlockSlot(ClientPlayerEntity player) {
+                                     ^
+  符号:   类 ClientPlayerEntity
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:237: 错误: 找不到符号
+    private static BlockPos findPlaceAgainst(ClientWorld world, BlockPos targetPos) {
+                                             ^
+  符号:   类 ClientWorld
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:237: 错误: 找不到符号
+    private static BlockPos findPlaceAgainst(ClientWorld world, BlockPos targetPos) {
+                                                                ^
+  符号:   类 BlockPos
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:237: 错误: 找不到符号
+    private static BlockPos findPlaceAgainst(ClientWorld world, BlockPos targetPos) {
+                   ^
+  符号:   类 BlockPos
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:250: 错误: 找不到符号
+    private static Direction getDirection(BlockPos placeAgainst, BlockPos targetPos) {
+                                          ^
+  符号:   类 BlockPos
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:250: 错误: 找不到符号
+    private static Direction getDirection(BlockPos placeAgainst, BlockPos targetPos) {
+                                                                 ^
+  符号:   类 BlockPos
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:250: 错误: 找不到符号
+    private static Direction getDirection(BlockPos placeAgainst, BlockPos targetPos) {
+                   ^
+  符号:   类 Direction
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:262: 错误: 找不到符号
+    private static void checkAndResetIfFull(ClientWorld world, ClientPlayerEntity player) {
+                                            ^
+  符号:   类 ClientWorld
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:262: 错误: 找不到符号
+    private static void checkAndResetIfFull(ClientWorld world, ClientPlayerEntity player) {
+                                                               ^
+  符号:   类 ClientPlayerEntity
+  位置: 类 AutoBed
+E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:18: 错误: 程序包net.minecraft.util.math不存在
+import net.minecraft.util.math.*;
+^
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:3: 错误: 程序包net.minecraft.client.gui.screen不存在
+import net.minecraft.client.gui.screen.Screen;
+                                      ^
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:4: 错误: 程序包net.minecraft.client.gui.widget不存在
+import net.minecraft.client.gui.widget.ButtonWidget;
+                                      ^
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:5: 错误: 程序包net.minecraft.client.util.math不存在
+import net.minecraft.client.util.math.MatrixStack;
+                                     ^
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:6: 错误: 程序包net.minecraft.text不存在
+import net.minecraft.text.Text;
+                         ^
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:9: 错误: 找不到符号
+public class ModScreen extends Screen {
+                               ^
+  符号: 类 Screen
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:11: 错误: 找不到符号
+    private ButtonWidget auraToggle;
+            ^
+  符号:   类 ButtonWidget
+  位置: 类 ModScreen
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:12: 错误: 找不到符号
+    private ButtonWidget autoBedToggle;
+            ^
+  符号:   类 ButtonWidget
+  位置: 类 ModScreen
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:13: 错误: 找不到符号
+    private ButtonWidget anticheatToggle;
+            ^
+  符号:   类 ButtonWidget
+  位置: 类 ModScreen
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:55: 错误: 找不到符号
+    private Text getToggleText(String name, boolean enabled) {
+            ^
+  符号:   类 Text
+  位置: 类 ModScreen
+E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:61: 错误: 找不到符号
+    public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+                       ^
+  符号:   类 MatrixStack
+  位置: 类 ModScreen
+E:\3zidongshoujia\src\client\java\shoujia\keybind\KeyBindings.java:4: 错误: 程序包net.minecraft.client.option不存在
+import net.minecraft.client.option.KeyBinding;
+                                  ^
+E:\3zidongshoujia\src\client\java\shoujia\keybind\KeyBindings.java:5: 错误: 程序包net.minecraft.client.util不存在
+import net.minecraft.client.util.InputUtil;
+                                ^
+E:\3zidongshoujia\src\client\java\shoujia\keybind\KeyBindings.java:10: 错误: 找不到符号
+    public static KeyBinding openMenuKey;
+                  ^
+  符号:   类 KeyBinding
+  位置: 类 KeyBindings
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:3: 错误: 程序包net.minecraft.entity不存在
+import net.minecraft.entity.Entity;
+                           ^
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:4: 错误: 程序包net.minecraft.util.math不存在
+import net.minecraft.util.math.BlockPos;
+                              ^
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:5: 错误: 程序包net.minecraft.util.math不存在
+import net.minecraft.util.math.MathHelper;
+                              ^
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:6: 错误: 程序包net.minecraft.util.math不存在
+import net.minecraft.util.math.Vec3d;
+                              ^
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:7: 错误: 程序包net.minecraft.util.math不存在
+import net.minecraft.util.math.Vec3i;
+                              ^
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:15: 错误: 找不到符号
+    public static float[] getRotationsToEntity(Entity entity, Vec3d eyePos) {
+                                               ^
+  符号:   类 Entity
+  位置: 类 RotationUtils
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:15: 错误: 找不到符号
+    public static float[] getRotationsToEntity(Entity entity, Vec3d eyePos) {
+                                                              ^
+  符号:   类 Vec3d
+  位置: 类 RotationUtils
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:23: 错误: 找不到符号
+    public static float[] getRotationsTo(Vec3d from, Vec3d to) {
+                                         ^
+  符号:   类 Vec3d
+  位置: 类 RotationUtils
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:23: 错误: 找不到符号
+    public static float[] getRotationsTo(Vec3d from, Vec3d to) {
+                                                     ^
+  符号:   类 Vec3d
+  位置: 类 RotationUtils
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:30: 错误: 找不到符号
+    public static float[] getRotationsToBlock(BlockPos blockPos, Vec3d eyePos) {
+                                              ^
+  符号:   类 BlockPos
+  位置: 类 RotationUtils
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:30: 错误: 找不到符号
+    public static float[] getRotationsToBlock(BlockPos blockPos, Vec3d eyePos) {
+                                                                 ^
+  符号:   类 Vec3d
+  位置: 类 RotationUtils
+E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:35: 错误: 找不到符号
+    private static float[] getRotations(Vec3d diff) {
+                                        ^
+  符号:   类 Vec3d
+  位置: 类 RotationUtils
+E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:18: 错误: 找不到符号
+    private static final MinecraftClient client = MinecraftClient.getInstance();
+                                                  ^
+  符号:   变量 MinecraftClient
+  位置: 类 AnticheatBypass
+E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:36: 错误: 找不到符号
+        yaw = MathHelper.wrapDegrees(yaw);
+              ^
+  符号:   变量 MathHelper
+  位置: 类 AnticheatBypass
+E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:38: 错误: 找不到符号
+        pitch = MathHelper.clamp(pitch, -90.0F, 90.0F);
+                ^
+  符号:   变量 MathHelper
+  位置: 类 AnticheatBypass
+E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:67: 错误: 找不到符号
+        float yawDiff = MathHelper.wrapDegrees(targetYaw - currentYaw);
+                        ^
+  符号:   变量 MathHelper
+  位置: 类 AnticheatBypass
+E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:70: 错误: 找不到符号
+        yawDiff = MathHelper.clamp(yawDiff, -maxYawStep, maxYawStep);
+                  ^
+  符号:   变量 MathHelper
+  位置: 类 AnticheatBypass
+E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:71: 错误: 找不到符号
+        pitchDiff = MathHelper.clamp(pitchDiff, -maxPitchStep, maxPitchStep);
+                    ^
+  符号:   变量 MathHelper
+  位置: 类 AnticheatBypass
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:33: 错误: 找不到符号
+    private static final MinecraftClient client = MinecraftClient.getInstance();
+                                                  ^
+  符号:   变量 MinecraftClient
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:52: 错误: 找不到符号
+        ClientPlayerEntity player = client.player;
+        ^
+  符号:   类 ClientPlayerEntity
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:53: 错误: 找不到符号
+        ClientWorld world = client.world;
+        ^
+  符号:   类 ClientWorld
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:57: 错误: 找不到符号
+        LivingEntity bestTarget = findBestTarget(player, world);
+        ^
+  符号:   类 LivingEntity
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:66: 错误: 找不到符号
+        Vec3d eyePos = player.getEyePos();
+        ^
+  符号:   类 Vec3d
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:78: 错误: 程序包PlayerMoveC2SPacket不存在
+        player.networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(
+                                                                ^
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:84: 错误: 找不到符号
+                PlayerInteractEntityC2SPacket.attack(bestTarget, player.isSneaking())
+                ^
+  符号:   变量 PlayerInteractEntityC2SPacket
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:88: 错误: 找不到符号
+        player.swingHand(Hand.MAIN_HAND);
+                         ^
+  符号:   变量 Hand
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:91: 错误: 程序包PlayerMoveC2SPacket不存在
+        player.networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(
+                                                                ^
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:101: 错误: 找不到符号
+        Box box = player.getBoundingBox().expand(range);
+        ^
+  符号:   类 Box
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:103: 错误: 找不到符号
+        List<LivingEntity> entities = world.getEntitiesByClass(
+             ^
+  符号:   类 LivingEntity
+  位置: 类 AuraKill
+E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:104: 错误: 找不到符号
+                LivingEntity.class, box,
+                ^
+  符号:   类 LivingEntity
+  位置: 类 AuraKill
+注: 某些消息已经过简化; 请使用 -Xdiags:verbose 重新编译以获得完整输出
+100 个错误
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileClientJava'.
+> Compilation failed; see the compiler output below.
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:3: 错误: 找不到符号
+  import net.minecraft.client.MinecraftClient;
+                             ^
+    符号:   类 MinecraftClient
+    位置: 程序包 net.minecraft.client
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:18: 错误: 找不到符号
+      private static final MinecraftClient client = MinecraftClient.getInstance();
+                           ^
+    符号:   类 MinecraftClient
+    位置: 类 AnticheatBypass
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:3: 错误: 找不到符号
+  import net.minecraft.client.MinecraftClient;
+                             ^
+    符号:   类 MinecraftClient
+    位置: 程序包 net.minecraft.client
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:13: 错误: 找不到符号
+  import net.minecraft.util.Hand;
+                           ^
+    符号:   类 Hand
+    位置: 程序包 net.minecraft.util
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:33: 错误: 找不到符号
+      private static final MinecraftClient client = MinecraftClient.getInstance();
+                           ^
+    符号:   类 MinecraftClient
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:36: 错误: 找不到符号
+      private static LivingEntity target;
+                     ^
+    符号:   类 LivingEntity
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:99: 错误: 找不到符号
+      private static LivingEntity findBestTarget(ClientPlayerEntity player, ClientWorld world) {
+                                                 ^
+    符号:   类 ClientPlayerEntity
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:99: 错误: 找不到符号
+      private static LivingEntity findBestTarget(ClientPlayerEntity player, ClientWorld world) {
+                                                                            ^
+    符号:   类 ClientWorld
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:99: 错误: 找不到符号
+      private static LivingEntity findBestTarget(ClientPlayerEntity player, ClientWorld world) {
+                     ^
+    符号:   类 LivingEntity
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:121: 错误: 找不到符号
+      private static void switchToBestWeapon(ClientPlayerEntity player) {
+                                             ^
+    符号:   类 ClientPlayerEntity
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:143: 错误: 找不到符号
+      private static float getWeaponScore(ItemStack stack) {
+                                          ^
+    符号:   类 ItemStack
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:157: 错误: 找不到符号
+      public static LivingEntity getTarget() {
+                    ^
+    符号:   类 LivingEntity
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:8: 错误: 找不到符号
+  import net.minecraft.client.MinecraftClient;
+                             ^
+    符号:   类 MinecraftClient
+    位置: 程序包 net.minecraft.client
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:16: 错误: 找不到符号
+  import net.minecraft.util.Hand;
+                           ^
+    符号:   类 Hand
+    位置: 程序包 net.minecraft.util
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:36: 错误: 找不到符号
+      private static final MinecraftClient client = MinecraftClient.getInstance();
+                           ^
+    符号:   类 MinecraftClient
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:39: 错误: 找不到符号
+      private static final List<Block> BLOCK_PRIORITY = List.of(
+                                ^
+    符号:   类 Block
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:51: 错误: 找不到符号
+      private static final List<Vec3i> PLACE_OFFSETS = List.of(
+                                ^
+    符号:   类 Vec3i
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:67: 错误: 找不到符号
+      private static BlockPos bedPos = null;
+                     ^
+    符号:   类 BlockPos
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:194: 错误: 找不到符号
+      private static BlockPos findNearestBed(ClientWorld world, ClientPlayerEntity player) {
+                                             ^
+    符号:   类 ClientWorld
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:194: 错误: 找不到符号
+      private static BlockPos findNearestBed(ClientWorld world, ClientPlayerEntity player) {
+                                                                ^
+    符号:   类 ClientPlayerEntity
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:194: 错误: 找不到符号
+      private static BlockPos findNearestBed(ClientWorld world, ClientPlayerEntity player) {
+                     ^
+    符号:   类 BlockPos
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:220: 错误: 找不到符号
+      private static int findBlockSlot(ClientPlayerEntity player) {
+                                       ^
+    符号:   类 ClientPlayerEntity
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:237: 错误: 找不到符号
+      private static BlockPos findPlaceAgainst(ClientWorld world, BlockPos targetPos) {
+                                               ^
+    符号:   类 ClientWorld
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:237: 错误: 找不到符号
+      private static BlockPos findPlaceAgainst(ClientWorld world, BlockPos targetPos) {
+                                                                  ^
+    符号:   类 BlockPos
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:237: 错误: 找不到符号
+      private static BlockPos findPlaceAgainst(ClientWorld world, BlockPos targetPos) {
+                     ^
+    符号:   类 BlockPos
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:250: 错误: 找不到符号
+      private static Direction getDirection(BlockPos placeAgainst, BlockPos targetPos) {
+                                            ^
+    符号:   类 BlockPos
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:250: 错误: 找不到符号
+      private static Direction getDirection(BlockPos placeAgainst, BlockPos targetPos) {
+                                                                   ^
+    符号:   类 BlockPos
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:250: 错误: 找不到符号
+      private static Direction getDirection(BlockPos placeAgainst, BlockPos targetPos) {
+                     ^
+    符号:   类 Direction
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:262: 错误: 找不到符号
+      private static void checkAndResetIfFull(ClientWorld world, ClientPlayerEntity player) {
+                                              ^
+    符号:   类 ClientWorld
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:262: 错误: 找不到符号
+      private static void checkAndResetIfFull(ClientWorld world, ClientPlayerEntity player) {
+                                                                 ^
+    符号:   类 ClientPlayerEntity
+    位置: 类 AutoBed
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:11: 错误: 找不到符号
+      private ButtonWidget auraToggle;
+              ^
+    符号:   类 ButtonWidget
+    位置: 类 ModScreen
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:12: 错误: 找不到符号
+      private ButtonWidget autoBedToggle;
+              ^
+    符号:   类 ButtonWidget
+    位置: 类 ModScreen
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:13: 错误: 找不到符号
+      private ButtonWidget anticheatToggle;
+              ^
+    符号:   类 ButtonWidget
+    位置: 类 ModScreen
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:55: 错误: 找不到符号
+      private Text getToggleText(String name, boolean enabled) {
+              ^
+    符号:   类 Text
+    位置: 类 ModScreen
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:61: 错误: 找不到符号
+      public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+                         ^
+    符号:   类 MatrixStack
+    位置: 类 ModScreen
+  E:\3zidongshoujia\src\client\java\shoujia\keybind\KeyBindings.java:10: 错误: 找不到符号
+      public static KeyBinding openMenuKey;
+                    ^
+    符号:   类 KeyBinding
+    位置: 类 KeyBindings
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:15: 错误: 找不到符号
+      public static float[] getRotationsToEntity(Entity entity, Vec3d eyePos) {
+                                                 ^
+    符号:   类 Entity
+    位置: 类 RotationUtils
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:15: 错误: 找不到符号
+      public static float[] getRotationsToEntity(Entity entity, Vec3d eyePos) {
+                                                                ^
+    符号:   类 Vec3d
+    位置: 类 RotationUtils
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:23: 错误: 找不到符号
+      public static float[] getRotationsTo(Vec3d from, Vec3d to) {
+                                           ^
+    符号:   类 Vec3d
+    位置: 类 RotationUtils
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:23: 错误: 找不到符号
+      public static float[] getRotationsTo(Vec3d from, Vec3d to) {
+                                                       ^
+    符号:   类 Vec3d
+    位置: 类 RotationUtils
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:30: 错误: 找不到符号
+      public static float[] getRotationsToBlock(BlockPos blockPos, Vec3d eyePos) {
+                                                ^
+    符号:   类 BlockPos
+    位置: 类 RotationUtils
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:30: 错误: 找不到符号
+      public static float[] getRotationsToBlock(BlockPos blockPos, Vec3d eyePos) {
+                                                                   ^
+    符号:   类 Vec3d
+    位置: 类 RotationUtils
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:35: 错误: 找不到符号
+      private static float[] getRotations(Vec3d diff) {
+                                          ^
+    符号:   类 Vec3d
+    位置: 类 RotationUtils
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:18: 错误: 找不到符号
+      private static final MinecraftClient client = MinecraftClient.getInstance();
+                                                    ^
+    符号:   变量 MinecraftClient
+    位置: 类 AnticheatBypass
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:36: 错误: 找不到符号
+          yaw = MathHelper.wrapDegrees(yaw);
+                ^
+    符号:   变量 MathHelper
+    位置: 类 AnticheatBypass
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:38: 错误: 找不到符号
+          pitch = MathHelper.clamp(pitch, -90.0F, 90.0F);
+                  ^
+    符号:   变量 MathHelper
+    位置: 类 AnticheatBypass
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:67: 错误: 找不到符号
+          float yawDiff = MathHelper.wrapDegrees(targetYaw - currentYaw);
+                          ^
+    符号:   变量 MathHelper
+    位置: 类 AnticheatBypass
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:70: 错误: 找不到符号
+          yawDiff = MathHelper.clamp(yawDiff, -maxYawStep, maxYawStep);
+                    ^
+    符号:   变量 MathHelper
+    位置: 类 AnticheatBypass
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:71: 错误: 找不到符号
+          pitchDiff = MathHelper.clamp(pitchDiff, -maxPitchStep, maxPitchStep);
+                      ^
+    符号:   变量 MathHelper
+    位置: 类 AnticheatBypass
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:33: 错误: 找不到符号
+      private static final MinecraftClient client = MinecraftClient.getInstance();
+                                                    ^
+    符号:   变量 MinecraftClient
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:52: 错误: 找不到符号
+          ClientPlayerEntity player = client.player;
+          ^
+    符号:   类 ClientPlayerEntity
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:53: 错误: 找不到符号
+          ClientWorld world = client.world;
+          ^
+    符号:   类 ClientWorld
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:57: 错误: 找不到符号
+          LivingEntity bestTarget = findBestTarget(player, world);
+          ^
+    符号:   类 LivingEntity
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:66: 错误: 找不到符号
+          Vec3d eyePos = player.getEyePos();
+          ^
+    符号:   类 Vec3d
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:84: 错误: 找不到符号
+                  PlayerInteractEntityC2SPacket.attack(bestTarget, player.isSneaking())
+                  ^
+    符号:   变量 PlayerInteractEntityC2SPacket
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:88: 错误: 找不到符号
+          player.swingHand(Hand.MAIN_HAND);
+                           ^
+    符号:   变量 Hand
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:101: 错误: 找不到符号
+          Box box = player.getBoundingBox().expand(range);
+          ^
+    符号:   类 Box
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:103: 错误: 找不到符号
+          List<LivingEntity> entities = world.getEntitiesByClass(
+               ^
+    符号:   类 LivingEntity
+    位置: 类 AuraKill
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:104: 错误: 找不到符号
+                  LivingEntity.class, box,
+                  ^
+    符号:   类 LivingEntity
+    位置: 类 AuraKill
+  注: 某些消息已经过简化; 请使用 -Xdiags:verbose 重新编译以获得完整输出
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:9: 错误: 找不到符号
+  public class ModScreen extends Screen {
+                                 ^
+    符号: 类 Screen
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:4: 错误: 程序包net.minecraft.client.network不存在
+  import net.minecraft.client.network.ClientPlayerEntity;
+                                     ^
+  E:\3zidongshoujia\src\client\java\shoujia\anticheat\AnticheatBypass.java:5: 错误: 程序包net.minecraft.util.math不存在
+  import net.minecraft.util.math.MathHelper;
+                                ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:4: 错误: 程序包net.minecraft.client.network不存在
+  import net.minecraft.client.network.ClientPlayerEntity;
+                                     ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:5: 错误: 程序包net.minecraft.client.world不存在
+  import net.minecraft.client.world.ClientWorld;
+                                   ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:6: 错误: 程序包net.minecraft.entity不存在
+  import net.minecraft.entity.Entity;
+                             ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:7: 错误: 程序包net.minecraft.entity不存在
+  import net.minecraft.entity.LivingEntity;
+                             ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:8: 错误: 程序包net.minecraft.entity.player不存在
+  import net.minecraft.entity.player.PlayerEntity;
+                                    ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:10: 错误: 程序包net.minecraft.network.packet.c2s.play不存在
+  import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
+                                              ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:11: 错误: 程序包net.minecraft.network.packet.c2s.play不存在
+  import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+                                              ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:12: 错误: 程序包net.minecraft.network.packet.c2s.play不存在
+  import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
+                                              ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:14: 错误: 程序包net.minecraft.util.math不存在
+  import net.minecraft.util.math.Box;
+                                ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:15: 错误: 程序包net.minecraft.util.math不存在
+  import net.minecraft.util.math.Vec3d;
+                                ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:9: 错误: 程序包net.minecraft.item不存在
+  import net.minecraft.item.*;
+  ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:3: 错误: 程序包net.minecraft.block不存在
+  import net.minecraft.block.BedBlock;
+                            ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:4: 错误: 程序包net.minecraft.block不存在
+  import net.minecraft.block.Block;
+                            ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:5: 错误: 程序包net.minecraft.block不存在
+  import net.minecraft.block.BlockState;
+                            ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:6: 错误: 程序包net.minecraft.block不存在
+  import net.minecraft.block.Blocks;
+                            ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:7: 错误: 程序包net.minecraft.block.enums不存在
+  import net.minecraft.block.enums.BedPart;
+                                  ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:9: 错误: 程序包net.minecraft.client.network不存在
+  import net.minecraft.client.network.ClientPlayerEntity;
+                                     ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:10: 错误: 程序包net.minecraft.client.world不存在
+  import net.minecraft.client.world.ClientWorld;
+                                   ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:11: 错误: 程序包net.minecraft.item不存在
+  import net.minecraft.item.BlockItem;
+                           ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:12: 错误: 程序包net.minecraft.item不存在
+  import net.minecraft.item.ItemStack;
+                           ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:13: 错误: 程序包net.minecraft.network.packet.c2s.play不存在
+  import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
+                                              ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:14: 错误: 程序包net.minecraft.network.packet.c2s.play不存在
+  import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+                                              ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:15: 错误: 程序包net.minecraft.network.packet.c2s.play不存在
+  import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
+                                              ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:17: 错误: 程序包net.minecraft.util.hit不存在
+  import net.minecraft.util.hit.BlockHitResult;
+                               ^
+  E:\3zidongshoujia\src\client\java\shoujia\autobed\AutoBed.java:18: 错误: 程序包net.minecraft.util.math不存在
+  import net.minecraft.util.math.*;
+  ^
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:3: 错误: 程序包net.minecraft.client.gui.screen不存在
+  import net.minecraft.client.gui.screen.Screen;
+                                        ^
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:4: 错误: 程序包net.minecraft.client.gui.widget不存在
+  import net.minecraft.client.gui.widget.ButtonWidget;
+                                        ^
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:5: 错误: 程序包net.minecraft.client.util.math不存在
+  import net.minecraft.client.util.math.MatrixStack;
+                                       ^
+  E:\3zidongshoujia\src\client\java\shoujia\gui\ModScreen.java:6: 错误: 程序包net.minecraft.text不存在
+  import net.minecraft.text.Text;
+                           ^
+  E:\3zidongshoujia\src\client\java\shoujia\keybind\KeyBindings.java:4: 错误: 程序包net.minecraft.client.option不存在
+  import net.minecraft.client.option.KeyBinding;
+                                    ^
+  E:\3zidongshoujia\src\client\java\shoujia\keybind\KeyBindings.java:5: 错误: 程序包net.minecraft.client.util不存在
+  import net.minecraft.client.util.InputUtil;
+                                  ^
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:3: 错误: 程序包net.minecraft.entity不存在
+  import net.minecraft.entity.Entity;
+                             ^
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:4: 错误: 程序包net.minecraft.util.math不存在
+  import net.minecraft.util.math.BlockPos;
+                                ^
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:5: 错误: 程序包net.minecraft.util.math不存在
+  import net.minecraft.util.math.MathHelper;
+                                ^
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:6: 错误: 程序包net.minecraft.util.math不存在
+  import net.minecraft.util.math.Vec3d;
+                                ^
+  E:\3zidongshoujia\src\client\java\shoujia\util\RotationUtils.java:7: 错误: 程序包net.minecraft.util.math不存在
+  import net.minecraft.util.math.Vec3i;
+                                ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:78: 错误: 程序包PlayerMoveC2SPacket不存在
+          player.networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(
+                                                                  ^
+  E:\3zidongshoujia\src\client\java\shoujia\aura\AuraKill.java:91: 错误: 程序包PlayerMoveC2SPacket不存在
+          player.networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(
+                                                                  ^
+  100 个错误
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to generate a Build Scan (powered by Develocity).
+
+BUILD FAILED in 15s
+Could not execute build using connection to Gradle distribution 'https://mirrors.cloud.tencent.com/gradle/gradle-9.2.1-bin.zip'.
+ *  终端进程已终止，退出代码: 1。 
